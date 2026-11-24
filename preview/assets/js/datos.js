@@ -40,11 +40,9 @@
   ];
 
   const pasos = [
-    { t: 'Identifica su necesidad', d: 'Elige el área y el tipo de situación que enfrenta. No necesita conocer términos jurídicos.' },
-    { t: 'Completa el formulario inicial', d: 'Siete preguntas cortas. Toma unos dos minutos y puede hacerlo desde el celular.' },
-    { t: 'El sistema organiza su solicitud', d: 'La solicitud se ordena por área y urgencia para que llegue a la persona indicada. No es un diagnóstico jurídico.' },
-    { t: 'El equipo revisa la información', d: 'Un integrante del equipo lee su caso y valora si corresponde a los servicios de la firma.' },
-    { t: 'Le contactamos si corresponde', d: 'Si podemos ayudarle, le contactamos por el canal que usted indicó para coordinar la consulta.' },
+    { t: 'Nos cuenta su situación', d: 'Por WhatsApp, por teléfono o con el formulario de este sitio. Son preguntas cortas y no necesita términos jurídicos.' },
+    { t: 'Revisamos y le orientamos', d: 'Una persona del equipo lee su caso y valora si corresponde a los servicios de la firma. Ningún sistema decide por usted.' },
+    { t: 'Le acompañamos', d: 'Si podemos ayudarle, le contactamos por el canal que indicó para coordinar la consulta y los siguientes pasos.' },
   ];
 
   // Sin nombres reales: la firma los confirmará. En producción se administran desde el panel (Equipo).
