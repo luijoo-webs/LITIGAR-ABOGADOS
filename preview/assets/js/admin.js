@@ -1,6 +1,6 @@
-/* Panel administrativo en MODO DEMOSTRACIÓN.
-   Toda lectura y escritura pasa por `db` (localStorage). En producción, estas mismas operaciones
-   se hacen contra Supabase con sesión real y RLS (ver supabase/schema.sql); la interfaz no cambia. */
+/* Panel administrativo. Dos modos con la misma interfaz:
+   - Conectado: sesión real de Supabase Auth; lee y escribe en Supabase y los permisos los impone RLS.
+   - Demostración: datos ficticios en localStorage; nunca toca Supabase. */
 (function () {
   const L = window.LITIGAR;
   const $ = (s, el = document) => el.querySelector(s);
@@ -11,9 +11,10 @@
   const areaNombre = (id) => (L.areas.find((a) => a.id === id) || {}).nombre || (id === 'otra' ? 'Otra área' : id === 'nose' ? 'No sabe' : id);
   const ESTADOS_CASO = { activo: 'Activo', en_tramite: 'En trámite', en_espera: 'En espera', cerrado: 'Cerrado' };
 
-  let db = L.store.leer();
-  if (!db) { db = L.semilla(); L.store.guardar(db); }
-  const guardar = () => L.store.guardar(db);
+  const C = window.LITIGAR_CONFIG || {};
+  const CONFIGURADO = !!(C.supabaseUrl && C.supabaseKey);
+  let modo = null, db = null, ses = null; // modo: 'real' | 'demo'
+  const guardar = () => { if (modo === 'demo') L.store.guardar(db); };
 
   // Permisos por rol (mismo criterio que las políticas RLS del esquema).
   const PERMISOS = {
@@ -21,10 +22,73 @@
     asistente: ['panel', 'solicitudes', 'clientes', 'contenido', 'asignar'],
     abogado: ['panel', 'solicitudes', 'clientes', 'casos', 'convertir'],
   };
-  let yo = db.equipo[0];
+  let yo = null;
   const puede = (p) => PERMISOS[yo.rol].includes(p);
   const quien = (id) => (db.equipo.find((u) => u.id === id) || {}).nombre || 'Sin asignar';
-  const auditar = (accion) => { db.auditoria.unshift({ fecha: new Date().toISOString(), quien: yo.nombre, accion }); guardar(); };
+  // En modo conectado la auditoría la escriben los triggers de la base de datos.
+  const auditar = (accion) => { if (modo !== 'demo') return; db.auditoria.unshift({ fecha: new Date().toISOString(), quien: yo.nombre, accion }); guardar(); };
+
+  /* ===== Supabase (modo conectado). Solo la clave publicable; los permisos los decide RLS. ===== */
+  const SES = 'litigar-sesion';
+  async function pedir(ruta, opt = {}, token) {
+    const r = await fetch(C.supabaseUrl + ruta, Object.assign({}, opt, {
+      headers: Object.assign({ apikey: C.supabaseKey, Authorization: 'Bearer ' + (token || C.supabaseKey), 'Content-Type': 'application/json' }, opt.headers) }));
+    const t = await r.text(); let d = null; try { d = t ? JSON.parse(t) : null; } catch (e) {}
+    if (!r.ok) throw new Error((d && (d.message || d.msg || d.error_description || d.error)) || `Error ${r.status}`);
+    return d;
+  }
+  async function auth(tipo, cuerpo) {
+    ses = await pedir('/auth/v1/token?grant_type=' + tipo, { method: 'POST', body: JSON.stringify(cuerpo) });
+    try { sessionStorage.setItem(SES, JSON.stringify(ses)); } catch (e) {}
+  }
+  async function api(ruta, opt) {
+    if (ses.expires_at * 1000 < Date.now() + 60000) await auth('refresh_token', { refresh_token: ses.refresh_token });
+    return pedir('/rest/v1/' + ruta, opt, ses.access_token);
+  }
+  async function editar(tabla, id, cambios) {
+    const r = await api(`${tabla}?id=eq.${id}`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(cambios) });
+    if (!r || !r.length) throw new Error('su rol no tiene permiso para modificar este registro'); // RLS filtra en silencio
+  }
+  const crear = (tabla, fila) => api(tabla, { method: 'POST', body: JSON.stringify(fila) });
+
+  // Trae todo lo que RLS deja ver a este usuario y lo deja con la misma forma que los datos de demostración.
+  async function cargar() {
+    const [perf, pesp, sols, notas, clis, casos, acts, movs, reglas, esp] = await Promise.all([
+      'perfiles?select=id,nombre,correo,rol&rol=not.is.null&activo=is.true', 'perfil_especialidades?select=*',
+      'solicitudes?select=*&order=creada.desc', 'notas_solicitud?select=*&order=creada', 'clientes?select=*&order=creado.desc',
+      'casos?select=*&order=abierto.desc', 'actividades_caso?select=*', 'movimientos_caso?select=*&order=creado',
+      'reglas_clasificacion?select=config', 'especialidades?select=id,publicada'].map((r) => api(r)));
+    const aud = yo.rol === 'admin' ? await api('auditoria?select=fecha,tabla,accion,actor_id&order=fecha.desc&limit=200') : [];
+    const equipo = perf.map((p) => ({ id: p.id, nombre: p.nombre || p.correo, correo: p.correo, rol: p.rol,
+      areas: pesp.filter((x) => x.perfil_id === p.id).map((x) => x.especialidad_id) }));
+    const nombre = (id) => !id ? 'Sitio web / sistema' : (equipo.find((u) => u.id === id) || {}).nombre || 'Usuario inactivo';
+    const codCli = Object.fromEntries(clis.map((c) => [c.id, c.codigo]));
+    const ACC = { INSERT: 'Creó un registro en', UPDATE: 'Modificó un registro en', DELETE: 'Eliminó un registro de' };
+    db = {
+      equipo,
+      solicitudes: sols.map((s) => Object.assign({}, s, { id: s.codigo, uuid: s.id, asignado: s.asignado_a, cliente: codCli[s.cliente_id] || null,
+        notas: notas.filter((n) => n.solicitud_id === s.id).map((n) => ({ fecha: n.creada, autor: nombre(n.autor_id), texto: n.texto })) })),
+      clientes: clis.map((c) => ({ id: c.codigo, uuid: c.id, nombre: c.nombre, tipo: c.tipo, documento: c.documento || 'Por registrar',
+        contacto: c.telefono || c.correo || '—', ciudad: c.ciudad || '—', desde: c.creado, observaciones: c.observaciones })),
+      casos: casos.map((c) => ({ id: c.codigo, uuid: c.id, cliente: codCli[c.cliente_id], responsable: c.responsable_id, area: c.especialidad_id,
+        titulo: c.titulo, estado: c.estado, abierto: c.abierto,
+        actividades: acts.filter((a) => a.caso_id === c.id).map((a) => ({ fecha: a.fecha, texto: a.texto })),
+        movimientos: movs.filter((m) => m.caso_id === c.id).map((m) => ({ fecha: m.creado, texto: m.texto })) })),
+      auditoria: aud.map((a) => ({ fecha: a.fecha, quien: nombre(a.actor_id), accion: `${ACC[a.accion] || a.accion} ${a.tabla}` })),
+      // Las áreas atendidas en la base de datos son las especialidades publicadas.
+      reglas: Object.assign({}, (reglas[0] || {}).config, { areasAtendidas: esp.filter((e) => e.publicada).map((e) => e.id) }),
+    };
+  }
+
+  // Ejecuta un cambio en el modo activo, recarga si es real y vuelve a pintar.
+  async function hacer(ok, demo, real, despues) {
+    let r;
+    if (modo === 'real') {
+      try { r = await real(); } catch (e) { toast('No se guardó: ' + e.message); despues(); return; }
+      try { await cargar(); } catch (e) { toast('Guardado, pero no se pudo recargar: ' + e.message); return; }
+    } else { r = demo(); guardar(); }
+    nav(); toast(typeof ok === 'function' ? ok(r) : ok); despues();
+  }
   const misSolicitudes = () => db.solicitudes.filter((s) => yo.rol !== 'abogado' || s.asignado === yo.id);
   const misCasos = () => db.casos.filter((c) => yo.rol !== 'abogado' || c.responsable === yo.id);
 
@@ -86,7 +150,7 @@
         <section class="tarjeta"><h2>Bandeja por estado</h2><div class="embudo">${Object.entries(L.estados).map(([k, t]) =>
           `<div class="embudo-fila"><span>${t}</span><div class="embudo-barra"><span class="est-${k}" style="width:${(cuenta(k) / max) * 100}%;background:var(--c)"></span></div><strong>${cuenta(k)}</strong></div>`).join('')}</div></section>
         <section class="tarjeta"><h2>Próximas actividades</h2>${proximas.length ? `<ul class="lista-simple">${proximas.map((a) => `<li><time>${fd(a.fecha)}</time><span>${esc(a.texto)}<span class="sub-linea">${a.caso}</span></span></li>`).join('')}</ul>` : '<p class="vacio">Sin actividades programadas.</p>'}</section>
-        <section class="tarjeta"><h2>Actividad reciente</h2><ul class="lista-simple">${db.auditoria.slice(0, 6).map((a) => `<li><time>${fh(a.fecha)}</time><span>${esc(a.accion)}<span class="sub-linea">${esc(a.quien)}</span></span></li>`).join('')}</ul></section>
+        <section class="tarjeta"><h2>Actividad reciente</h2>${db.auditoria.length ? `<ul class="lista-simple">${db.auditoria.slice(0, 6).map((a) => `<li><time>${fh(a.fecha)}</time><span>${esc(a.accion)}<span class="sub-linea">${esc(a.quien)}</span></span></li>`).join('')}</ul>` : '<p class="vacio">El registro de actividad solo lo ve el administrador.</p>'}</section>
       </div>`;
     v.onclick = (e) => { const s = e.target.closest('[data-sol]'); if (s) detalleSolicitud(s.dataset.sol); const m = e.target.closest('[data-mod-ir]'); if (m) ir(m.dataset.modIr); };
   };
@@ -162,23 +226,39 @@
       <div class="det-seccion"><h3>Notas internas</h3>
         <div id="dNotas">${s.notas.length ? s.notas.map((n) => `<div class="nota"><small>${esc(n.autor)} · ${fh(n.fecha)}</small>${esc(n.texto)}</div>`).join('') : '<p class="vacio">Sin notas.</p>'}</div>
         <form class="nota-form" id="dNotaForm"><textarea id="dNota" maxlength="1000" placeholder="Escriba una nota visible solo para el equipo"></textarea><button class="btn btn-primario" type="submit">Añadir nota</button></form></div>`);
-    $('#dEstado').addEventListener('change', (e) => { const a = s.estado; s.estado = e.target.value; auditar(`Cambió ${s.id}: ${L.estados[a]} → ${L.estados[s.estado]}`); toast('Estado actualizado'); refrescar(id); });
-    $('#dAsig').addEventListener('change', (e) => { s.asignado = e.target.value || null; if (s.asignado && s.estado === 'nueva') s.estado = 'pendiente'; auditar(`Asignó ${s.id} a ${quien(s.asignado)}`); toast('Asignación guardada'); refrescar(id); });
-    $('#dArchivar').addEventListener('click', () => { s.archivada = !s.archivada; auditar(`${s.archivada ? 'Archivó' : 'Desarchivó'} ${s.id}`); toast(s.archivada ? 'Solicitud archivada' : 'Solicitud restaurada'); refrescar(id); });
+    const tras = () => { VISTAS[actual]($('#vista')); detalleSolicitud(id); };
+    $('#dEstado').addEventListener('change', (e) => {
+      const a = s.estado, n = e.target.value;
+      hacer('Estado actualizado', () => { s.estado = n; auditar(`Cambió ${s.id}: ${L.estados[a]} → ${L.estados[n]}`); },
+        () => editar('solicitudes', s.uuid, { estado: n }), tras);
+    });
+    $('#dAsig').addEventListener('change', (e) => {
+      const u = e.target.value || null;
+      hacer('Asignación guardada', () => { s.asignado = u; if (u && s.estado === 'nueva') s.estado = 'pendiente'; auditar(`Asignó ${s.id} a ${quien(u)}`); },
+        () => editar('solicitudes', s.uuid, { asignado_a: u }), tras);
+    });
+    $('#dArchivar').addEventListener('click', () => {
+      const v = !s.archivada;
+      hacer(v ? 'Solicitud archivada' : 'Solicitud restaurada', () => { s.archivada = v; auditar(`${v ? 'Archivó' : 'Desarchivó'} ${s.id}`); },
+        () => editar('solicitudes', s.uuid, { archivada: v }), tras);
+    });
     $('#dNotaForm').addEventListener('submit', (e) => {
       e.preventDefault(); const tx = $('#dNota').value.trim(); if (!tx) return;
-      s.notas.push({ fecha: new Date().toISOString(), autor: yo.nombre, texto: tx }); auditar(`Añadió una nota a ${s.id}`); refrescar(id);
+      hacer('Nota añadida', () => { s.notas.push({ fecha: new Date().toISOString(), autor: yo.nombre, texto: tx }); auditar(`Añadió una nota a ${s.id}`); },
+        () => crear('notas_solicitud', { solicitud_id: s.uuid, texto: tx }), tras);
     });
     const conv = $('#dConvertir');
     if (conv) conv.addEventListener('click', () => {
-      const cli = { id: `CLI-${String(db.clientes.length + 1).padStart(4, '0')}`, nombre: s.nombre, tipo: s.tipo, documento: 'Por registrar', contacto: s.telefono || s.correo, ciudad: s.ciudad, desde: new Date().toISOString(), observaciones: '' };
-      const caso = { id: `CAS-${new Date().getFullYear()}-${String(db.casos.length + 13).padStart(4, '0')}`, cliente: cli.id, responsable: s.asignado || (sugeridos[0] || {}).id || null, area: s.area,
-        titulo: `Caso desde ${s.id}`, estado: 'activo', abierto: new Date().toISOString(), actividades: [], movimientos: [{ fecha: new Date().toISOString(), texto: `Caso abierto desde la solicitud ${s.id}` }] };
-      db.clientes.unshift(cli); db.casos.unshift(caso); s.estado = 'convertida'; s.cliente = cli.id;
-      auditar(`Convirtió ${s.id} en el cliente ${cli.id} y el caso ${caso.id}`); toast(`Creados ${cli.id} y ${caso.id}`); refrescar(id);
+      conv.disabled = true;
+      hacer((r) => r, () => {
+        const cli = { id: `CLI-${String(db.clientes.length + 1).padStart(4, '0')}`, nombre: s.nombre, tipo: s.tipo, documento: 'Por registrar', contacto: s.telefono || s.correo, ciudad: s.ciudad, desde: new Date().toISOString(), observaciones: '' };
+        const caso = { id: `CAS-${new Date().getFullYear()}-${String(db.casos.length + 13).padStart(4, '0')}`, cliente: cli.id, responsable: s.asignado || (sugeridos[0] || {}).id || null, area: s.area,
+          titulo: `Caso desde ${s.id}`, estado: 'activo', abierto: new Date().toISOString(), actividades: [], movimientos: [{ fecha: new Date().toISOString(), texto: `Caso abierto desde la solicitud ${s.id}` }] };
+        db.clientes.unshift(cli); db.casos.unshift(caso); s.estado = 'convertida'; s.cliente = cli.id;
+        auditar(`Convirtió ${s.id} en el cliente ${cli.id} y el caso ${caso.id}`); return `Creados ${cli.id} y ${caso.id}`;
+      }, async () => `Creado el caso ${await api('rpc/convertir_solicitud', { method: 'POST', body: JSON.stringify({ p_solicitud: s.uuid }) })} con su cliente`, tras);
     });
   }
-  function refrescar(id) { guardar(); nav(); VISTAS[actual]($('#vista')); if (id) detalleSolicitud(id); }
 
   // Clientes
   VISTAS.clientes = (v) => {
@@ -201,15 +281,19 @@
       <div><dt>Contacto</dt><dd>${esc(c.contacto)}</dd></div><div><dt>Ciudad</dt><dd>${esc(c.ciudad)}</dd></div></dl>
       <div class="det-seccion"><h3>Casos asociados</h3>${casos.length ? `<ul class="lista-simple">${casos.map((k) => `<li><span class="cod">${k.id}</span><span>${esc(k.titulo)} · ${ESTADOS_CASO[k.estado]}</span></li>`).join('')}</ul>` : '<p class="vacio">Sin casos.</p>'}</div>
       <div class="det-seccion"><h3>Solicitudes asociadas</h3>${sols.length ? `<ul class="lista-simple">${sols.map((s) => `<li><span class="cod">${s.id}</span><span>${esc(areaNombre(s.area))}</span></li>`).join('')}</ul>` : '<p class="vacio">Sin solicitudes vinculadas.</p>'}</div>
-      <div class="det-seccion"><h3>Documentos autorizados</h3><p class="explica">En producción, los documentos se guardan en un almacenamiento privado de Supabase y solo los ven el responsable del caso y el administrador, mediante enlaces temporales. Esta función no está activa en la demostración.</p></div>
+      <div class="det-seccion"><h3>Documentos autorizados</h3><p class="explica">En producción, los documentos se guardan en un almacenamiento privado de Supabase y solo los ven el responsable del caso y el administrador, mediante enlaces temporales. Esta función todavía no está activa en el panel.</p></div>
       <div class="det-seccion"><h3>Observaciones</h3><form class="nota-form" id="obsForm"><textarea id="obs" maxlength="2000">${esc(c.observaciones)}</textarea><button class="btn btn-primario">Guardar observaciones</button></form></div>`);
-    $('#obsForm').addEventListener('submit', (e) => { e.preventDefault(); c.observaciones = $('#obs').value.trim(); auditar(`Actualizó observaciones de ${c.id}`); toast('Observaciones guardadas'); });
+    $('#obsForm').addEventListener('submit', (e) => {
+      e.preventDefault(); const tx = $('#obs').value.trim();
+      hacer('Observaciones guardadas', () => { c.observaciones = tx; auditar(`Actualizó observaciones de ${c.id}`); },
+        () => editar('clientes', c.uuid, { observaciones: tx }), () => detalleCliente(id));
+    });
   }
 
   // Casos (tablero)
   VISTAS.casos = (v) => {
     const casos = misCasos();
-    v.innerHTML = `<p class="aviso">Cada cambio de estado registra un movimiento en el historial del caso. En producción lo hace un trigger de la base de datos.</p>
+    v.innerHTML = `<p class="aviso">Cada cambio de estado registra un movimiento en el historial del caso${modo === 'real' ? ' (lo escribe un trigger de la base de datos)' : ''}.</p>
       <div class="tablero">${Object.entries(ESTADOS_CASO).map(([k, t]) => { const cs = casos.filter((c) => c.estado === k); return `<div class="columna"><h3>${t}<span>${cs.length}</span></h3>${cs.map((c) =>
         `<article class="caso" data-caso="${c.id}" tabindex="0"><span class="cod">${c.id}</span><strong>${esc(c.titulo)}</strong><span class="chip">${esc(areaNombre(c.area))}</span>
         <div class="meta"><span>${esc(quien(c.responsable))}</span><span>${c.actividades.length} act.</span></div></article>`).join('') || '<p class="vacio">Sin casos</p>'}</div>`; }).join('')}</div>`;
@@ -223,16 +307,23 @@
       <div class="det-seccion"><h3>Próximas actividades</h3>${c.actividades.length ? `<ul class="lista-simple">${c.actividades.sort((a, b) => a.fecha.localeCompare(b.fecha)).map((a) => `<li><time>${fd(a.fecha)}</time><span>${esc(a.texto)}</span></li>`).join('')}</ul>` : '<p class="vacio">Sin actividades.</p>'}
         <form class="form-grid" id="actForm" style="margin-top:10px"><label>Fecha<input type="date" id="aFecha" required></label><label>Actividad<input id="aTexto" maxlength="200" required></label><button class="btn btn-primario ancho">Añadir actividad</button></form></div>
       <div class="det-seccion"><h3>Historial de movimientos</h3><ul class="linea-tiempo">${[...c.movimientos].reverse().map((m) => `<li><time>${fh(m.fecha)}</time>${esc(m.texto)}</li>`).join('')}</ul></div>`);
+    const tras = () => { VISTAS[actual]($('#vista')); detalleCaso(id); };
     $('#cEstado').addEventListener('change', (e) => {
-      const a = c.estado; c.estado = e.target.value;
-      c.movimientos.push({ fecha: new Date().toISOString(), texto: `Estado: ${ESTADOS_CASO[a]} → ${ESTADOS_CASO[c.estado]} (${yo.nombre})` });
-      auditar(`Cambió el estado de ${c.id} a ${ESTADOS_CASO[c.estado]}`); guardar(); VISTAS.casos($('#vista')); detalleCaso(id); toast('Estado del caso actualizado');
+      const a = c.estado, n = e.target.value;
+      hacer('Estado del caso actualizado', () => {
+        c.estado = n; c.movimientos.push({ fecha: new Date().toISOString(), texto: `Estado: ${ESTADOS_CASO[a]} → ${ESTADOS_CASO[n]} (${yo.nombre})` });
+        auditar(`Cambió el estado de ${c.id} a ${ESTADOS_CASO[n]}`);
+      }, () => editar('casos', c.uuid, { estado: n }), tras);
     });
     $('#actForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      c.actividades.push({ fecha: $('#aFecha').value, texto: $('#aTexto').value.trim() });
-      c.movimientos.push({ fecha: new Date().toISOString(), texto: `Actividad programada: ${$('#aTexto').value.trim()}` });
-      auditar(`Programó una actividad en ${c.id}`); guardar(); VISTAS.casos($('#vista')); detalleCaso(id);
+      e.preventDefault(); const f = $('#aFecha').value, tx = $('#aTexto').value.trim();
+      hacer('Actividad añadida', () => {
+        c.actividades.push({ fecha: f, texto: tx }); c.movimientos.push({ fecha: new Date().toISOString(), texto: `Actividad programada: ${tx}` });
+        auditar(`Programó una actividad en ${c.id}`);
+      }, async () => {
+        await crear('actividades_caso', { caso_id: c.uuid, fecha: f, texto: tx });
+        await crear('movimientos_caso', { caso_id: c.uuid, texto: `Actividad programada: ${tx}` });
+      }, tras);
     });
   }
 
@@ -242,17 +333,19 @@
     v.innerHTML = `<div class="personas">${db.equipo.map((u) => `<article class="persona"><div class="avatar">${esc(u.nombre[0])}</div><h3>${esc(u.nombre)}</h3><p>${esc(u.correo)}</p>
       <div class="etiquetas"><span>${u.rol === 'admin' ? 'Administrador' : u.rol === 'abogado' ? 'Abogado' : 'Asistente'}</span>${u.areas.map((a) => `<span>${esc(areaNombre(a))}</span>`).join('')}</div></article>`).join('')}</div>
       <div class="rejilla" style="margin-top:18px">
-        <section class="tarjeta"><h2>Añadir integrante</h2>
-          <p class="explica" style="margin-top:0">En producción, el administrador invita al integrante por correo (Edge Function con la clave de servicio en el servidor). En la demostración solo se añade a la lista local.</p>
+        <section class="tarjeta"><h2>Añadir integrante</h2>${modo === 'real'
+          ? `<p class="explica" style="margin-top:0">Invitar desde el panel necesita una función del servidor (Edge Function) que todavía no está implementada. Por ahora:</p>
+          <ol class="explica"><li>Invite a la persona en Supabase → Authentication → Users.</li><li>Asígnele el rol en el editor SQL:<br><code>update public.perfiles set rol = 'abogado', activo = true where correo = '…';</code></li></ol>`
+          : `<p class="explica" style="margin-top:0">En la demostración solo se añade a la lista local de este navegador.</p>
           <form class="form-grid" id="uForm"><label>Nombre<input id="uNombre" required maxlength="80"></label><label>Correo<input id="uCorreo" type="email" required maxlength="120"></label>
           <label>Rol<select id="uRol"><option value="abogado">Abogado</option><option value="asistente">Asistente</option><option value="admin">Administrador</option></select></label>
           <div class="ancho"><span style="font-size:.8rem;font-weight:700;color:var(--gris)">Especialidades</span><div class="areas-check">${L.areas.map((a) => `<label><input type="checkbox" value="${a.id}"> ${a.corto}</label>`).join('')}</div></div>
-          <button class="btn btn-primario ancho">Añadir</button></form></section>
+          <button class="btn btn-primario ancho">Añadir</button></form>`}</section>
         <section class="tarjeta"><h2>Permisos por rol</h2><div class="tabla-envoltura" style="border:0"><table class="permisos"><thead><tr><th>Permiso</th><th>Admin.</th><th>Abogado</th><th>Asistente</th></tr></thead><tbody>
           ${filasPerm.map(([t, k]) => `<tr><td>${t}</td>${['admin', 'abogado', 'asistente'].map((r) => PERMISOS[r].includes(k) ? '<td class="si">✓</td>' : '<td class="no">—</td>').join('')}</tr>`).join('')}</tbody></table></div>
           <p class="explica">Los abogados solo ven sus solicitudes y casos asignados. Estas reglas se aplican en la base de datos (RLS), no solo en la interfaz.</p></section>
       </div>`;
-    $('#uForm').addEventListener('submit', (e) => {
+    if (modo === 'demo') $('#uForm').addEventListener('submit', (e) => {
       e.preventDefault();
       const u = { id: 'u' + Date.now(), nombre: $('#uNombre').value.trim(), correo: $('#uCorreo').value.trim(), rol: $('#uRol').value, areas: $$('.areas-check input:checked', e.target).map((i) => i.value) };
       db.equipo.push(u); auditar(`Añadió a ${u.nombre} como ${u.rol}`); toast('Integrante añadido (solo en la demostración)'); VISTAS.equipo(v);
@@ -262,6 +355,10 @@
   // Contenido
   let pestana = 'areas';
   VISTAS.contenido = (v) => {
+    if (modo === 'real') {
+      v.innerHTML = '<p class="aviso oro">La edición de contenido desde el panel todavía no está conectada a Supabase. Por ahora el sitio público toma sus textos de <code>assets/js/datos.js</code> y los cambios se hacen allí.</p>';
+      return;
+    }
     db.contenido = db.contenido || {};
     const tabs = [['areas', 'Áreas de práctica'], ['equipo', 'Equipo público'], ['articulos', 'Artículos'], ['faqs', 'Preguntas frecuentes'], ['contacto', 'Contacto']];
     const datos = { areas: L.areas, equipo: L.equipo, articulos: L.articulos, faqs: L.faqs };
@@ -298,7 +395,7 @@
   VISTAS.clasificacion = (v) => {
     const r = db.reglas;
     const prueba = { area: 'laboral', urgencia: 'alta', proceso: 'no', descripcion: 'x'.repeat(90), telefono: '1' };
-    v.innerHTML = `<p class="aviso">Estas reglas ordenan la bandeja y sugieren un estado inicial. <strong>No deciden la aceptación de un caso ni constituyen una evaluación jurídica.</strong> En producción se guardan en la tabla <code>reglas_clasificacion</code> y las aplica la función del servidor.</p>
+    v.innerHTML = `<p class="aviso">Estas reglas ordenan la bandeja y sugieren un estado inicial. <strong>No deciden la aceptación de un caso ni constituyen una evaluación jurídica.</strong> ${modo === 'real' ? 'Se guardan en la tabla <code>reglas_clasificacion</code> y la función del servidor las aplica a cada solicitud nueva.' : 'En la demostración se guardan en este navegador.'}</p>
       <div class="rejilla"><section class="tarjeta"><h2>Pesos de la puntuación</h2>
         ${Object.entries({ area: 'Área atendida por la firma', urgencia: 'Urgencia', proceso: 'Proceso en curso', descripcion: 'Descripción suficiente', contacto: 'Datos de contacto' }).map(([k, t]) =>
           `<div class="regla"><span>${t}</span><input type="range" min="0" max="50" value="${r.pesos[k]}" data-peso="${k}" aria-label="${t}"><output>${r.pesos[k]}</output></div>`).join('')}
@@ -306,9 +403,10 @@
         <div class="regla"><span>Mínimo de caracteres en la descripción</span><input type="range" min="20" max="300" step="10" value="${r.minDescripcion}" data-min aria-label="Mínimo de caracteres"><output>${r.minDescripcion}</output></div>
         <p class="explica" id="total"></p></section>
         <section class="tarjeta"><h2>Áreas que atiende la firma</h2><p class="explica" style="margin-top:0">Las solicitudes de otras áreas se marcan como "No corresponde a los servicios" para revisión, sin descartarse automáticamente.</p>
-          <div class="areas-check">${L.areas.map((a) => `<label><input type="checkbox" value="${a.id}" ${r.areasAtendidas.includes(a.id) ? 'checked' : ''} data-area> ${a.nombre}</label>`).join('')}</div>
+          <div class="areas-check">${L.areas.map((a) => `<label><input type="checkbox" value="${a.id}" ${r.areasAtendidas.includes(a.id) ? 'checked' : ''} ${modo === 'real' ? 'disabled' : ''} data-area> ${a.nombre}</label>`).join('')}</div>
+          ${modo === 'real' ? '<p class="explica">En la base de datos son las especialidades publicadas (tabla <code>especialidades</code>).</p>' : ''}
           <h2 style="margin-top:22px">Ejemplo</h2><p class="explica" id="ejemplo"></p>
-          <div class="botonera"><button class="btn btn-primario" id="recalcular">Guardar y recalcular bandeja</button><button class="btn btn-borde" id="restablecerReglas">Valores por defecto</button></div></section></div>`;
+          <div class="botonera"><button class="btn btn-primario" id="recalcular">${modo === 'real' ? 'Guardar reglas' : 'Guardar y recalcular bandeja'}</button><button class="btn btn-borde" id="restablecerReglas">Valores por defecto</button></div></section></div>`;
     const actualizar = () => {
       $$('[data-peso]', v).forEach((i) => { r.pesos[i.dataset.peso] = +i.value; i.nextElementSibling.textContent = i.value; });
       const u = $('[data-umbral]', v); r.umbralCalificada = +u.value; u.nextElementSibling.textContent = u.value;
@@ -321,29 +419,81 @@
     };
     v.oninput = actualizar; v.onchange = actualizar; actualizar();
     $('#recalcular').addEventListener('click', () => {
+      if (modo === 'real') {
+        const config = Object.assign({}, r); delete config.areasAtendidas;
+        return hacer('Reglas guardadas · se aplican a las solicitudes nuevas', null,
+          () => editar('reglas_clasificacion', 'true', { config, actualizado_por: yo.id }), () => VISTAS.clasificacion(v));
+      }
       let n = 0;
       db.solicitudes.forEach((s) => { const c = L.clasificar(s, r); s.puntaje = c.puntaje; s.prioridad = c.prioridad; if (s.estado === 'nueva' || s.estado === 'incompleta' || s.estado === 'requiere_evaluacion' || s.estado === 'no_corresponde') { if (!s.asignado) { s.estado = c.estadoSugerido; n++; } } });
       auditar('Actualizó las reglas de clasificación y recalculó la bandeja'); toast(`Reglas guardadas · ${n} solicitudes sin revisar reclasificadas`);
     });
-    $('#restablecerReglas').addEventListener('click', () => { db.reglas = JSON.parse(JSON.stringify(L.reglasBase)); guardar(); VISTAS.clasificacion(v); });
+    $('#restablecerReglas').addEventListener('click', () => {
+      db.reglas = Object.assign(JSON.parse(JSON.stringify(L.reglasBase)), modo === 'real' ? { areasAtendidas: r.areasAtendidas } : {});
+      guardar(); VISTAS.clasificacion(v); if (modo === 'real') toast('Valores por defecto cargados. Pulse "Guardar reglas" para aplicarlos.');
+    });
   };
 
   VISTAS.auditoria = (v) => {
-    v.innerHTML = `<p class="aviso">Registro de acciones importantes. En producción lo escriben triggers de la base de datos y nadie puede editarlo ni borrarlo desde el panel.</p>
+    v.innerHTML = `<p class="aviso">Registro de acciones importantes. ${modo === 'real' ? 'Lo escriben triggers de la base de datos y nadie puede editarlo ni borrarlo desde el panel. Se muestran los 200 más recientes.' : 'En la demostración se guarda en este navegador.'}</p>
       <div class="tabla-envoltura"><table><thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th></tr></thead><tbody>${db.auditoria.map((a) => `<tr style="cursor:default"><td style="white-space:nowrap">${fh(a.fecha)}</td><td>${esc(a.quien)}</td><td>${esc(a.accion)}</td></tr>`).join('')}</tbody></table></div>`;
   };
 
   /* ===== Arranque ===== */
-  function entrar() {
+  function mostrarApp() {
+    const demo = modo === 'demo';
     $('#acceso').hidden = true; $('#app').hidden = false;
-    try { sessionStorage.setItem('litigar-demo', '1'); } catch (e) {}
+    $('#rol').closest('label').style.display = demo ? '' : 'none'; $('#reiniciar').style.display = demo ? '' : 'none';
+    const ins = $('.insignia-demo');
+    ins.textContent = demo ? 'Modo demostración · datos ficticios' : `Conectado · ${yo.nombre}`;
+    ins.title = demo ? 'Datos ficticios guardados solo en este navegador' : 'Datos reales de Supabase; los permisos los aplica la base de datos';
     let mod = 'panel'; try { mod = sessionStorage.getItem('litigar-mod') || 'panel'; } catch (e) {}
     ir(mod);
   }
-  $('#entrarDemo').addEventListener('click', entrar);
-  $('#salir').addEventListener('click', () => { try { sessionStorage.removeItem('litigar-demo'); } catch (e) {} $('#app').hidden = true; $('#acceso').hidden = false; });
+  function entrarDemo() {
+    modo = 'demo'; db = L.store.leer(); if (!db) { db = L.semilla(); guardar(); }
+    yo = db.equipo[0]; $('#rol').value = yo.id;
+    try { sessionStorage.setItem('litigar-demo', '1'); } catch (e) {}
+    mostrarApp();
+  }
+  // Exige un perfil con rol y activo: una cuenta de Auth sin rol no entra al panel.
+  async function abrirSesion() {
+    const [p] = await api(`perfiles?id=eq.${ses.user.id}&select=id,nombre,correo,rol,activo`);
+    if (!p || !p.rol || !p.activo) throw new Error('Su cuenta existe, pero un administrador todavía no le ha asignado un rol en el panel.');
+    yo = { id: p.id, nombre: p.nombre || p.correo, correo: p.correo, rol: p.rol, areas: [] };
+    modo = 'real'; await cargar(); mostrarApp();
+  }
+  const olvidarSesion = () => { ses = null; try { sessionStorage.removeItem(SES); } catch (e) {} };
+
+  const fa = $('#formAcceso'), msj = $('#accesoMsj');
+  if (!CONFIGURADO) {
+    msj.textContent = 'El inicio de sesión real no está configurado (falta config.js). Solo está disponible el modo demostración.';
+  } else {
+    $$('input, button', fa).forEach((el) => (el.disabled = false));
+    fa.addEventListener('submit', async (e) => {
+      e.preventDefault(); const b = $('button', fa); b.disabled = true; msj.textContent = 'Verificando…';
+      try {
+        await auth('password', { email: $('#correo').value.trim(), password: $('#clave').value });
+        await abrirSesion(); fa.reset(); msj.textContent = '';
+      } catch (err) {
+        olvidarSesion(); modo = null;
+        msj.textContent = /invalid login|invalid_grant/i.test(err.message) ? 'Correo o contraseña incorrectos.' : err.message;
+      }
+      b.disabled = false;
+    });
+  }
+  $('#entrarDemo').addEventListener('click', entrarDemo);
+  $('#salir').addEventListener('click', () => {
+    if (modo === 'real' && ses) pedir('/auth/v1/logout', { method: 'POST' }, ses.access_token).catch(() => {});
+    olvidarSesion(); modo = null; db = null; cerrar();
+    try { sessionStorage.removeItem('litigar-demo'); } catch (e) {}
+    $('#app').hidden = true; $('#acceso').hidden = false;
+  });
   $('#rol').addEventListener('change', (e) => { yo = db.equipo.find((u) => u.id === e.target.value) || db.equipo[0]; toast(`Viendo el panel como: ${yo.nombre}`); ir(actual); });
   $('#reiniciar').addEventListener('click', () => { if (!confirm('¿Restablecer los datos de demostración? Se borran los cambios hechos en este navegador.')) return; db = L.semilla(); guardar(); ir('panel'); toast('Datos de demostración restablecidos'); });
   $('#menuMovil').addEventListener('click', () => $('#lateral').classList.toggle('abierto'));
-  try { if (sessionStorage.getItem('litigar-demo')) entrar(); } catch (e) {}
+
+  let guardada = null; try { guardada = JSON.parse(sessionStorage.getItem(SES)); } catch (e) {}
+  if (CONFIGURADO && guardada) { ses = guardada; abrirSesion().catch((err) => { olvidarSesion(); modo = null; msj.textContent = err.message; }); }
+  else { try { if (sessionStorage.getItem('litigar-demo')) entrarDemo(); } catch (e) {} }
 })();

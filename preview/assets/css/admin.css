@@ -36,6 +36,7 @@ button { cursor: pointer; }
 #formAcceso label { display: grid; gap: 6px; font-weight: 700; font-size: .82rem; }
 #formAcceso input { padding: 12px 14px; border: 1px solid var(--linea); border-radius: 2px; background: #F7F8FA; }
 .aviso-demo { font-size: .82rem; text-align: left; color: #6B5212; background: #FBF4E2; border-radius: 2px; padding: 12px 14px; line-height: 1.5; }
+.acceso-msj { min-height: 1.2em; margin: 0; font-size: .84rem; color: #B42318; text-align: left; }
 #entrarDemo { width: 100%; padding: 13px; }
 .volver { font-size: .85rem; color: var(--gris); }
 

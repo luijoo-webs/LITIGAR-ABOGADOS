@@ -11,7 +11,7 @@ Sitio web y sistema administrativo de **Litigar Group S.A.S. · Abogados & Aseso
 ```
 preview/                  Sitio público y panel (HTML, CSS y JS sin compilación)
   index.html              Página pública
-  admin/index.html        Panel administrativo (modo demostración)
+  admin/index.html        Panel administrativo (Supabase Auth o modo demostración)
   config.js               Configuración pública: URL de Supabase y clave publicable
   assets/css, js, img     Estilos, lógica y logo
 supabase/
@@ -35,13 +35,14 @@ Abrir http://localhost:5510 para el sitio y http://localhost:5510/admin/ para el
 
 | Funciona en el preview | Pendiente para producción |
 |---|---|
-| Sitio completo: áreas, proceso, equipo, artículos, contacto y preguntas frecuentes | Autenticación real del panel (Supabase Auth) |
-| Asistente de solicitud con validación y consentimiento: **guarda en Supabase** mediante `crear_solicitud()`, que clasifica en el servidor | Que el panel lea las solicitudes reales (hoy muestra datos de demostración) |
+| Sitio completo: áreas, proceso, equipo, artículos, contacto y preguntas frecuentes | Crear el primer administrador (paso 3 de abajo) |
+| Asistente de solicitud con validación y consentimiento: **guarda en Supabase** mediante `crear_solicitud()`, que clasifica en el servidor | Invitar integrantes desde el panel (requiere Edge Function) |
 | Base de datos de Litigar aplicada en Supabase, con RLS en las 18 tablas y los buckets `documentos` (privado) y `sitio` | Correos de confirmación y aviso (Edge Function + SMTP) |
-| Panel en modo demostración: solicitudes, clientes, casos, equipo, contenido, reglas y auditoría | Subida de documentos al bucket privado |
+| Panel conectado: inicio de sesión con Supabase Auth; lee y edita solicitudes, notas, clientes, casos, actividades, reglas y auditoría con los permisos de RLS | Subida de documentos al bucket privado |
+| Modo demostración del panel con datos ficticios (solo en el navegador) | Editar el contenido del sitio desde el panel (hoy se edita en `datos.js`) |
 | | Alertas programadas (pg_cron) |
 
-El panel trabaja en modo demostración: sus datos son **ficticios** y se guardan solo en el navegador (localStorage), y lo indica en pantalla. Las solicitudes del sitio van a Supabase y no aparecen en ese panel hasta conectar su autenticación. Si se vacía `config.js`, el sitio vuelve al modo demostración.
+El panel tiene dos entradas. **Iniciar sesión**: Supabase Auth; solo entran cuentas con rol asignado y activo, y cada rol ve lo que RLS le permite. **Modo demostración**: datos ficticios en localStorage, sin tocar Supabase, y lo indica en pantalla. Si se vacía `config.js`, sitio y panel quedan solo en modo demostración.
 
 Los textos sobre la firma marcados como *Provisional* o *Por confirmar* deben reemplazarse con información confirmada por Litigar. No se inventaron nombres, cifras ni casos: las áreas y los temas salen del Instagram de la firma.
 
