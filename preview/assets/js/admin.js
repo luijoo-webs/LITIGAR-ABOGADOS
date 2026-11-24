@@ -557,7 +557,53 @@
   $('#reiniciar').addEventListener('click', () => { if (!confirm('¿Restablecer los datos de demostración? Se borran los cambios hechos en este navegador.')) return; db = L.semilla(); guardar(); ir('panel'); toast('Datos de demostración restablecidos'); });
   $('#menuMovil').addEventListener('click', () => $('#lateral').classList.toggle('abierto'));
 
+  // Enlaces de invitación y recuperación: Supabase vuelve con la sesión en el hash (#access_token=…&type=invite).
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (CONFIGURADO && (h.get('access_token') || h.get('error_code'))) {
+    history.replaceState(null, '', location.pathname); // no dejar el token en la barra de direcciones
+    if (h.get('error_code')) {
+      msj.textContent = h.get('error_code') === 'otp_expired' ? 'El enlace venció o ya se usó. Pida uno nuevo con "¿Olvidó su contraseña?".' : 'El enlace no es válido: ' + (h.get('error_description') || h.get('error_code'));
+    } else {
+      ses = { access_token: h.get('access_token'), refresh_token: h.get('refresh_token'), expires_at: Math.floor(Date.now() / 1000) + (+h.get('expires_in') || 3600) };
+      pedir('/auth/v1/user', {}, ses.access_token).then((u) => {
+        ses.user = u; try { sessionStorage.setItem(SES, JSON.stringify(ses)); } catch (e) {}
+        if (!['invite', 'recovery', 'signup'].includes(h.get('type'))) return abrirSesion();
+        // Pantalla para crear la contraseña (la escribe solo la persona; nunca se guarda en el navegador)
+        fa.innerHTML = `<p style="margin:0;text-align:left"><strong>${h.get('type') === 'recovery' ? 'Nueva contraseña' : 'Cree su contraseña'}</strong><br><small>${esc(u.email)}</small></p>
+          <label>Contraseña<input type="password" id="clave1" required minlength="8" autocomplete="new-password"></label>
+          <label>Repita la contraseña<input type="password" id="clave2" required minlength="8" autocomplete="new-password"></label>
+          <button class="btn btn-primario" type="submit">Guardar contraseña y entrar</button><p class="acceso-msj" id="accesoMsj" role="alert"></p>`;
+        const m2 = $('#accesoMsj', fa);
+        fa.addEventListener('submit', async (e) => {
+          e.preventDefault(); e.stopImmediatePropagation();
+          const p1 = $('#clave1').value, p2 = $('#clave2').value;
+          if (p1.length < 8) { m2.textContent = 'Use al menos 8 caracteres.'; return; }
+          if (p1 !== p2) { m2.textContent = 'Las contraseñas no coinciden.'; return; }
+          try {
+            await pedir('/auth/v1/user', { method: 'PUT', body: JSON.stringify({ password: p1 }) }, ses.access_token);
+            fa.reset(); await abrirSesion();
+          } catch (err) { m2.textContent = err.message; }
+        }, true);
+      }).catch(() => { olvidarSesion(); msj.textContent = 'El enlace venció o ya se usó. Pida uno nuevo con "¿Olvidó su contraseña?".'; });
+    }
+  }
+
+  // Recuperar contraseña: Supabase envía un enlace que vuelve a esta misma página.
+  if (CONFIGURADO) {
+    const olvido = document.createElement('button');
+    olvido.type = 'button'; olvido.className = 'olvido'; olvido.textContent = '¿Olvidó su contraseña?';
+    fa.after(olvido);
+    olvido.addEventListener('click', async () => {
+      const correo = ($('#correo') || {}).value?.trim();
+      if (!correo) { msj.textContent = 'Escriba su correo arriba y vuelva a pulsar "¿Olvidó su contraseña?".'; return; }
+      try {
+        await pedir('/auth/v1/recover?redirect_to=' + encodeURIComponent(location.origin + location.pathname), { method: 'POST', body: JSON.stringify({ email: correo }) });
+        msj.textContent = 'Si el correo pertenece a una cuenta, le llegará un enlace para crear una contraseña nueva.';
+      } catch (err) { msj.textContent = 'No se pudo enviar el enlace: ' + err.message; }
+    });
+  }
+
   let guardada = null; try { guardada = JSON.parse(sessionStorage.getItem(SES)); } catch (e) {}
-  if (CONFIGURADO && guardada) { ses = guardada; abrirSesion().catch((err) => { olvidarSesion(); modo = null; msj.textContent = err.message; }); }
+  if (h.get('access_token')) { /* lo maneja el bloque anterior */ } else if (CONFIGURADO && guardada) { ses = guardada; abrirSesion().catch((err) => { olvidarSesion(); modo = null; msj.textContent = err.message; }); }
   else { try { if (sessionStorage.getItem('litigar-demo')) entrarDemo(); } catch (e) {} }
 })();
