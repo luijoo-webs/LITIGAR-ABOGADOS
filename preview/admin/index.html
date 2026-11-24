@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel Litigar | Gestión jurídica</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="../assets/img/litigar-logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/admin.css?v=2">
+</head>
+<body>
+
+<!-- Acceso -->
+<section class="acceso" id="acceso">
+  <div class="acceso-caja">
+    <span class="sello"><img src="../assets/img/litigar-logo.jpg" alt="Logo de Litigar Group S.A.S."></span>
+    <h1>Panel de gestión</h1>
+    <p class="sub">Litigar Group S.A.S. · Acceso exclusivo del equipo</p>
+    <form id="formAcceso">
+      <label>Correo<input type="email" disabled placeholder="nombre@litigar.co"></label>
+      <label>Contraseña<input type="password" disabled placeholder="••••••••"></label>
+      <button class="btn btn-primario" type="button" disabled>Iniciar sesión</button>
+    </form>
+    <div class="aviso-demo">
+      <strong>Vista previa.</strong> La autenticación real (Supabase Auth, con roles y RLS) se activa en producción; el esquema ya está preparado. Para presentar el panel, entre en modo demostración: los datos son ficticios y se guardan solo en este navegador.
+    </div>
+    <button class="btn btn-oro" id="entrarDemo">Entrar en modo demostración</button>
+    <a class="volver" href="../">← Volver al sitio</a>
+  </div>
+</section>
+
+<!-- Aplicación -->
+<div class="app" id="app" hidden>
+  <aside class="lateral" id="lateral">
+    <div class="lateral-marca">
+      <span class="sello chico"><img src="../assets/img/litigar-logo.jpg" alt=""></span>
+      <div><strong>Litigar</strong><small>Gestión jurídica</small></div>
+    </div>
+    <nav class="lateral-nav" id="nav" aria-label="Módulos"></nav>
+    <div class="lateral-pie">
+      <label class="rol">Ver como
+        <select id="rol">
+          <option value="u1">Administrador</option>
+          <option value="u2">Abogado A</option>
+          <option value="u3">Abogada B</option>
+          <option value="u5">Asistente</option>
+        </select>
+      </label>
+      <button class="btn-mini" id="reiniciar">Restablecer datos de demostración</button>
+      <button class="btn-mini" id="salir">Salir</button>
+    </div>
+  </aside>
+
+  <div class="principal">
+    <header class="barra">
+      <button class="menu-movil" id="menuMovil" aria-label="Abrir menú">☰</button>
+      <h1 id="titulo">Panel</h1>
+      <span class="insignia-demo" title="Datos ficticios guardados solo en este navegador">Modo demostración · datos ficticios</span>
+    </header>
+    <main class="vista" id="vista" tabindex="-1"></main>
+  </div>
+</div>
+
+<!-- Panel lateral de detalle -->
+<div class="velo" id="velo" hidden></div>
+<aside class="detalle" id="detalle" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Detalle">
+  <button class="cerrar" id="cerrarDetalle" aria-label="Cerrar">×</button>
+  <div id="detalleCuerpo"></div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="../config.js?v=2"></script>
+<script src="../assets/js/datos.js?v=2"></script>
+<script src="../assets/js/demo.js?v=2"></script>
+<script src="../assets/js/admin.js?v=2"></script>
+</body>
+</html>
