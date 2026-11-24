@@ -9,8 +9,10 @@
 <link rel="icon" href="assets/img/litigar-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Source+Serif+4:opsz,wght@8..60,400..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/sitio.css?v=3">
+<link rel="preload" as="image" href="https://images.unsplash.com/photo-1714974528737-3e6c7e4d11af?auto=format&fit=crop&w=1600&q=72">
+<link rel="stylesheet" href="assets/css/sitio.css?v=5">
 </head>
 <body>
 <a class="saltar" href="#contenido">Saltar al contenido</a>
@@ -19,14 +21,14 @@
   <div class="marquesina-pista" id="marquesina"></div>
 </div>
 
-<header class="cabecera" id="cabecera">
+<header class="cabecera sobre-oscuro" id="cabecera">
   <div class="cabecera-in">
     <button class="menu-boton" id="menuBoton" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
     <nav class="menu" id="menu" aria-label="Principal">
+      <a href="#firma">Firma</a>
       <a href="#areas">Áreas</a>
       <a href="#trabajamos">Cómo trabajamos</a>
       <a href="#equipo">Equipo</a>
-      <a href="#conocimiento">Artículos</a>
       <a href="#contacto">Contacto</a>
     </nav>
     <a href="#inicio" class="marca" aria-label="Litigar Group, inicio">
@@ -37,54 +39,55 @@
       <a href="#" data-wa class="icono-btn" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2.2A9.8 9.8 0 0 0 3.6 17l-1.4 4.8 5-1.3A9.8 9.8 0 1 0 12 2.2Zm0 17.8a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8.9c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.6.3 2.7 2.7 0 0 0-.9 2c0 1.2.9 2.3 1 2.5.1.2 1.7 2.6 4.1 3.6 1.5.7 2.1.7 2.9.6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1l-.3-.3Z"/></svg>
       </a>
-      <a href="#solicitud" class="btn btn-tinta btn-sm cabecera-cta">Solicitar consulta</a>
+      <a href="#solicitud" class="btn btn-oro btn-sm cabecera-cta">Solicitar consulta</a>
     </div>
   </div>
 </header>
 
 <main id="contenido">
 
-<!-- INICIO -->
-<section class="inicio" id="inicio">
-  <div class="contenedor inicio-grid">
-    <div class="inicio-texto">
-      <p class="eyebrow revelar">Litigar Group · Derecho &amp; Finanzas</p>
-      <h1 class="revelar">Los problemas legales rara vez empiezan siendo grandes.</h1>
-      <p class="inicio-lead revelar">Abogados y contadores que le orientan desde el primer momento, para que sepa dónde está parado y qué puede hacer.</p>
-    </div>
-    <div class="resolver revelar">
-      <p class="eyebrow">¿Qué necesita resolver?</p>
-      <ul class="filas" id="resolver"></ul>
-      <a href="#solicitud" class="fila-alterna">No sé qué área es <span aria-hidden="true">→</span></a>
+<!-- INICIO: foto a sangre con texto superpuesto -->
+<section class="hero" id="inicio">
+  <figure class="hero-foto">
+    <img src="https://images.unsplash.com/photo-1714974528737-3e6c7e4d11af?auto=format&fit=crop&w=1600&q=72"
+      srcset="https://images.unsplash.com/photo-1714974528737-3e6c7e4d11af?auto=format&fit=crop&w=900&q=70 900w, https://images.unsplash.com/photo-1714974528737-3e6c7e4d11af?auto=format&fit=crop&w=1600&q=72 1600w, https://images.unsplash.com/photo-1714974528737-3e6c7e4d11af?auto=format&fit=crop&w=2400&q=72 2400w"
+      sizes="100vw" alt="Reunión de asesoría en una oficina" fetchpriority="high">
+    <figcaption class="ref">Imagen de referencia</figcaption>
+  </figure>
+  <div class="contenedor hero-in">
+    <p class="eyebrow claro entra">Litigar Group · Derecho &amp; Finanzas</p>
+    <h1 class="entra">Los problemas legales rara vez empiezan siendo grandes.</h1>
+    <p class="hero-lead entra">Abogados y contadores que le orientan desde el primer momento, para que sepa dónde está parado y qué puede hacer.</p>
+    <div class="hero-acciones entra">
+      <a href="#solicitud" class="btn btn-oro">Solicitar consulta</a>
+      <a href="#" data-wa class="btn btn-claro" target="_blank" rel="noopener">Escribir por WhatsApp</a>
     </div>
   </div>
+  <figure class="hero-detalle entra" aria-hidden="true">
+    <img src="https://images.unsplash.com/photo-1763729805496-b5dbf7f00c79?auto=format&fit=crop&w=600&q=70" alt="">
+  </figure>
 </section>
 
-<!-- ÁREAS -->
-<section class="seccion" id="areas">
-  <div class="contenedor">
-    <div class="cabeza-seccion">
-      <div>
-        <p class="eyebrow">Áreas de práctica <span class="cuenta" id="areasCuenta"></span></p>
-        <h2>En qué le podemos ayudar</h2>
-      </div>
-      <p class="nota-prov">Áreas tomadas de las publicaciones de la firma. Descripciones provisionales.</p>
-    </div>
-    <div class="pestanas" id="areasTabs" role="tablist" aria-label="Áreas de práctica"></div>
-    <div class="area-panel" id="areaPanel" role="tabpanel" aria-live="polite"></div>
-  </div>
-</section>
+<!-- Áreas rápidas: panel que se monta sobre el hero -->
+<div class="contenedor rapido-envoltura">
+  <nav class="rapido revelar" aria-label="¿Qué necesita resolver?">
+    <p class="rapido-titulo">¿Qué necesita resolver?</p>
+    <ul id="resolver"></ul>
+  </nav>
+</div>
 
-<!-- FIRMA -->
-<section class="firma" id="firma">
+<!-- FIRMA: composición partida con foto recortada -->
+<section class="seccion firma" id="firma">
   <div class="contenedor firma-grid">
-    <div>
-      <p class="eyebrow">Sobre Litigar</p>
-      <p class="firma-lema">Especialidad. <span>Estrategia.</span> Cercanía.</p>
-    </div>
+    <figure class="foto foto-firma revelar">
+      <img src="https://images.unsplash.com/photo-1758518731462-d091b0b4ed0d?auto=format&fit=crop&w=1100&q=72" loading="lazy" alt="Profesionales revisando un caso en una sala de reuniones">
+      <figcaption class="ref">Imagen de referencia</figcaption>
+    </figure>
     <div class="firma-texto">
-      <p>Somos una firma de abogados y contadores especialistas en Derecho &amp; Finanzas. Detrás de cada asunto legal suele haber también una decisión económica, y la atendemos completa.</p>
-      <dl class="firma-datos">
+      <p class="eyebrow revelar">Sobre Litigar</p>
+      <h2 class="revelar">Una firma donde el derecho y las finanzas trabajan juntos</h2>
+      <p class="revelar">Somos una firma de abogados y contadores especialistas en Derecho &amp; Finanzas. Detrás de cada asunto legal suele haber también una decisión económica, y la atendemos completa.</p>
+      <dl class="firma-datos revelar">
         <div><dt>+250</dt><dd>casos exitosos, según el perfil de la firma <span class="nota-prov">Por confirmar</span></dd></div>
         <div><dt>5</dt><dd>áreas de práctica</dd></div>
       </dl>
@@ -92,49 +95,85 @@
   </div>
 </section>
 
-<!-- CÓMO TRABAJAMOS -->
-<section class="seccion" id="trabajamos">
-  <div class="contenedor dos-col">
-    <div>
-      <p class="eyebrow">Cómo trabajamos</p>
-      <h2>De su primera pregunta a una respuesta clara</h2>
-      <p class="apoyo">El formulario ordena su solicitud por área y urgencia para que llegue a la persona indicada. No es un diagnóstico jurídico ni decide si la firma acepta el caso.</p>
-    </div>
-    <ol class="pasos" id="pasos"></ol>
+<!-- Banda con columnas: el símbolo del logo, a sangre -->
+<section class="banda" aria-label="Principios de la firma">
+  <img class="banda-foto" src="https://images.unsplash.com/photo-1483600516620-7254872369ae?auto=format&fit=crop&w=2000&q=70" loading="lazy" alt="">
+  <span class="ref">Imagen de referencia</span>
+  <div class="contenedor banda-in">
+    <p class="banda-lema revelar">Especialidad. <span>Estrategia.</span> Cercanía.</p>
+    <p class="banda-pie revelar">Los tres principios con los que la firma se presenta.</p>
   </div>
 </section>
 
-<!-- EQUIPO -->
-<section class="seccion seccion-papel" id="equipo">
+<!-- ÁREAS: sección oscura con foto por especialidad -->
+<section class="seccion oscura" id="areas">
+  <div class="contenedor">
+    <div class="cabeza-seccion">
+      <div>
+        <p class="eyebrow claro">Áreas de práctica <span class="cuenta" id="areasCuenta"></span></p>
+        <h2>En qué le podemos ayudar</h2>
+      </div>
+      <p class="nota-prov claro">Áreas tomadas de las publicaciones de la firma. Descripciones provisionales.</p>
+    </div>
+    <div class="pestanas" id="areasTabs" role="tablist" aria-label="Áreas de práctica"></div>
+    <div class="area-panel" id="areaPanel" role="tabpanel" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- CÓMO TRABAJAMOS: dos fotos superpuestas y pasos -->
+<section class="seccion" id="trabajamos">
+  <div class="contenedor trabajo-grid">
+    <div class="collage revelar">
+      <figure class="foto collage-a">
+        <img src="https://images.unsplash.com/photo-1758519288550-1975537cff9a?auto=format&fit=crop&w=1000&q=72" loading="lazy" alt="Asesor conversando con un cliente">
+        <figcaption class="ref">Imagen de referencia</figcaption>
+      </figure>
+      <figure class="foto collage-b">
+        <img src="https://images.unsplash.com/photo-1564846824194-346b7871b855?auto=format&fit=crop&w=700&q=72" loading="lazy" alt="Revisión de un documento">
+      </figure>
+    </div>
+    <div>
+      <p class="eyebrow revelar">Cómo trabajamos</p>
+      <h2 class="revelar">De su primera pregunta a una respuesta clara</h2>
+      <ol class="pasos" id="pasos"></ol>
+      <p class="apoyo pequeno">El formulario ordena su solicitud por área y urgencia para que llegue a la persona indicada. No es un diagnóstico jurídico ni decide si la firma acepta el caso.</p>
+    </div>
+  </div>
+</section>
+
+<!-- EQUIPO: espacios reservados para las fotos oficiales -->
+<section class="seccion seccion-blanca" id="equipo">
   <div class="contenedor">
     <div class="cabeza-seccion">
       <div>
         <p class="eyebrow">Equipo</p>
         <h2>Quién atiende su caso</h2>
       </div>
-      <p class="nota-prov">Nombres, cargos y fotos por confirmar. Se administran desde el panel.</p>
+      <p class="apoyo">Aquí irán las fotografías oficiales del equipo de Litigar. No usamos fotos de stock para representar a personas de la firma.</p>
     </div>
     <ul class="equipo" id="equipoLista"></ul>
   </div>
 </section>
 
-<!-- CONOCIMIENTO -->
-<section class="seccion" id="conocimiento">
-  <div class="contenedor">
-    <div class="cabeza-seccion">
-      <div>
-        <p class="eyebrow">Artículos</p>
-        <h2>Información clara para decidir mejor</h2>
-      </div>
-      <p class="nota-prov">Temas del Instagram de la firma. Textos y fechas provisionales.</p>
+<!-- ARTÍCULOS: cabecera fotográfica con texto superpuesto -->
+<section class="articulos-seccion" id="conocimiento">
+  <div class="articulos-cabeza">
+    <img src="https://images.unsplash.com/photo-1479142506502-19b3a3b7ff33?auto=format&fit=crop&w=2000&q=70" loading="lazy" alt="">
+    <span class="ref">Imagen de referencia</span>
+    <div class="contenedor">
+      <p class="eyebrow claro revelar">Artículos</p>
+      <h2 class="revelar">Información clara para decidir mejor</h2>
+      <p class="nota-prov claro revelar">Temas del Instagram de la firma. Textos y fechas provisionales.</p>
     </div>
+  </div>
+  <div class="contenedor articulos-cuerpo">
     <div class="pestanas" id="filtros" role="group" aria-label="Filtrar por categoría"></div>
     <ul class="articulos" id="articulos"></ul>
   </div>
 </section>
 
 <!-- SOLICITUD -->
-<section class="seccion seccion-papel" id="solicitud">
+<section class="seccion seccion-blanca" id="solicitud">
   <div class="contenedor">
     <div class="cabeza-seccion">
       <div>
@@ -168,19 +207,18 @@
   </div>
 </section>
 
-<!-- CONTACTO -->
-<section class="seccion" id="contacto">
-  <div class="contenedor dos-col">
-    <div>
-      <p class="eyebrow">Contacto</p>
-      <h2>Hablemos</h2>
-      <p class="apoyo">Escríbanos, llámenos o deje su solicitud en este sitio y el equipo le contactará.</p>
-      <ul class="canales" id="canales"></ul>
-    </div>
-    <div>
-      <p class="eyebrow">Preguntas frecuentes</p>
-      <div class="acordeon" id="faqs"></div>
-    </div>
+<!-- CONTACTO: foto de oficina a media página -->
+<section class="contacto" id="contacto">
+  <figure class="contacto-foto">
+    <img src="https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&w=1400&q=72" loading="lazy" alt="Sala de juntas con vista a la ciudad">
+    <figcaption class="ref">Imagen de referencia</figcaption>
+  </figure>
+  <div class="contacto-texto">
+    <p class="eyebrow claro">Contacto</p>
+    <h2>Hablemos de su caso a tiempo</h2>
+    <ul class="canales" id="canales"></ul>
+    <p class="eyebrow claro faqs-titulo">Preguntas frecuentes</p>
+    <div class="acordeon" id="faqs"></div>
   </div>
 </section>
 
@@ -218,6 +256,7 @@
   </div>
   <div class="contenedor pie-base">
     <span>© <span id="anio"></span> Litigar Group S.A.S.</span>
+    <span>Fotografías de referencia: Unsplash. Se reemplazarán por fotografías de la firma.</span>
     <span>La información de este sitio es general y no constituye asesoría jurídica.</span>
   </div>
 </footer>
@@ -238,9 +277,9 @@
   <div id="modalCuerpo"></div>
 </dialog>
 
-<script src="config.js?v=4"></script>
-<script src="assets/js/datos.js?v=3"></script>
-<script src="assets/js/demo.js?v=3"></script>
-<script src="assets/js/sitio.js?v=3"></script>
+<script src="config.js?v=5"></script>
+<script src="assets/js/datos.js?v=5"></script>
+<script src="assets/js/demo.js?v=5"></script>
+<script src="assets/js/sitio.js?v=5"></script>
 </body>
 </html>

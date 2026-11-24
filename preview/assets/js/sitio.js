@@ -20,13 +20,29 @@
   // Cabecera y menú
   const cab = $('#cabecera'), menu = $('#menu'), mb = $('#menuBoton');
   const enlaces = $$('.menu a[href^="#"]');
-  const alScroll = () => { cab.classList.toggle('con-borde', scrollY > 10); if (scrollY < 200) enlaces.forEach((a) => a.classList.remove('activo')); };
+  const hero = $('.hero');
+  // Sobre la foto del inicio la cabecera es transparente con texto claro
+  const alScroll = () => {
+    const sobreHero = hero && scrollY < hero.offsetTop + hero.offsetHeight - cab.offsetHeight;
+    cab.classList.toggle('sobre-oscuro', !!sobreHero && !menu.classList.contains('abierto'));
+    cab.classList.toggle('con-borde', !sobreHero && scrollY > 10);
+    cab.classList.toggle('velado', !!sobreHero && scrollY > 40);
+    if (scrollY < 200) enlaces.forEach((a) => a.classList.remove('activo'));
+  };
   addEventListener('scroll', alScroll, { passive: true }); alScroll();
-  const cerrarMenu = () => { menu.classList.remove('abierto'); mb.setAttribute('aria-expanded', 'false'); document.body.classList.remove('sin-scroll'); };
+
+  // Paralaje leve de la banda de columnas (solo con movimiento permitido)
+  const banda = $('.banda'), bandaFoto = $('.banda-foto');
+  if (banda && !reducir) addEventListener('scroll', () => requestAnimationFrame(() => {
+    const r = banda.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return;
+    bandaFoto.style.transform = `translateY(${((r.top + r.height / 2) / innerHeight - .5) * -60}px)`;
+  }), { passive: true });
+  const cerrarMenu = () => { menu.classList.remove('abierto'); mb.setAttribute('aria-expanded', 'false'); document.body.classList.remove('sin-scroll'); alScroll(); };
   mb.addEventListener('click', () => {
     document.documentElement.style.setProperty('--top-menu', cab.getBoundingClientRect().bottom + 'px');
     const a = menu.classList.toggle('abierto');
-    mb.setAttribute('aria-expanded', a); document.body.classList.toggle('sin-scroll', a);
+    mb.setAttribute('aria-expanded', a); document.body.classList.toggle('sin-scroll', a); alScroll();
   });
   $$('a', menu).forEach((a) => a.addEventListener('click', cerrarMenu));
   addEventListener('keydown', (e) => { if (e.key === 'Escape') { cerrarMenu(); cerrarCajon(); } });
@@ -40,11 +56,17 @@
   const obs = new IntersectionObserver((ents) => ents.forEach((en) => {
     if (en.isIntersecting) { en.target.classList.add('visible'); obs.unobserve(en.target); }
   }), { threshold: .1 });
-  $$('.revelar').forEach((el, i) => { el.style.transitionDelay = (i % 4) * 80 + 'ms'; obs.observe(el); });
+  const observar = (root = document) => $$('.revelar:not(.visible)', root).forEach((el, i) => { el.style.transitionDelay = (i % 4) * 80 + 'ms'; obs.observe(el); });
+
+  // Fotografías de referencia (Unsplash) mientras llegan las de la firma
+  const foto = (id, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=72`;
+  const fotoArea = { familia: '1562564055-71e051d33c19', laboral: '1551135049-8a33b5883817', civil: '1564846824194-346b7871b855',
+    'seguridad-social': '1758518729912-bf3a84c400e0', tributario: '1520607162513-77705c0f0d4a' };
 
   // Inicio: una fila por área que abre la solicitud con el área elegida
-  $('#resolver').innerHTML = L.areas.map((a, i) => `<li><button class="fila" data-solicitar="${a.id}">
-    <span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t"><strong>${esc(a.corto)}</strong><small>${esc(a.temas.slice(0, 2).join(' · '))}</small></span>${flecha}</button></li>`).join('');
+  $('#resolver').innerHTML = L.areas.map((a, i) => `<li><button class="rapido-item" data-solicitar="${a.id}">
+    <span class="n">${String(i + 1).padStart(2, '0')}</span><strong>${esc(a.corto)}</strong><small>${esc(a.temas[0])}</small>${flecha}</button></li>`).join('')
+    + `<li><button class="rapido-item otro" data-solicitar=""><span class="n">—</span><strong>No sé qué área es</strong><small>El equipo lo revisa</small>${flecha}</button></li>`;
 
   // Áreas: pestañas subrayadas y panel
   const tabs = $('#areasTabs'), panel = $('#areaPanel');
@@ -54,9 +76,10 @@
     const a = L.areas[i];
     $$('.pestana', tabs).forEach((b, j) => { b.setAttribute('aria-selected', i === j); b.tabIndex = i === j ? 0 : -1; });
     panel.setAttribute('aria-labelledby', 'tab-' + a.id);
-    panel.innerHTML = `<div><h3>${esc(a.nombre)}</h3><p class="resumen-area">${esc(a.resumen)}</p><p class="ampliado">${esc(a.ampliado)}</p></div>
-      <div><p class="eyebrow">Asuntos frecuentes</p><ul class="asuntos">${a.temas.map((t) => `<li><button data-solicitar="${a.id}" data-asunto="${esc(t)}">${esc(t)}<span>Consultar →</span></button></li>`).join('')}</ul>
-      <div class="asuntos-pie"><span class="nota-prov">Provisional · se edita desde el panel</span><button class="btn btn-linea btn-sm" data-solicitar="${a.id}">Consultar sobre ${esc(a.corto.toLowerCase())}</button></div></div>`;
+    panel.innerHTML = `<figure class="area-foto"><img src="${foto(fotoArea[a.id], 1000)}" alt=""><figcaption class="ref">Imagen de referencia</figcaption>
+        <div class="area-foto-texto"><span class="n">${String(i + 1).padStart(2, '0')}</span><h3>${esc(a.nombre)}</h3></div></figure>
+      <div class="area-info"><p class="resumen-area">${esc(a.resumen)}</p><p class="ampliado">${esc(a.ampliado)}</p><p class="eyebrow claro">Asuntos frecuentes</p><ul class="asuntos">${a.temas.map((t) => `<li><button data-solicitar="${a.id}" data-asunto="${esc(t)}">${esc(t)}<span>Consultar →</span></button></li>`).join('')}</ul>
+      <div class="asuntos-pie"><span class="nota-prov">Provisional · se edita desde el panel</span><button class="btn btn-oro btn-sm" data-solicitar="${a.id}">Consultar sobre ${esc(a.corto.toLowerCase())}</button></div></div>`;
   };
   tabs.addEventListener('click', (e) => { const b = e.target.closest('.pestana'); if (b) mostrarArea(+b.dataset.i); });
   tabs.addEventListener('keydown', (e) => {
@@ -72,9 +95,9 @@
   $('#pasos').innerHTML = L.pasos.map((p) => `<li><h3>${esc(p.t)}</h3><p>${esc(p.d)}</p></li>`).join('');
 
   // Equipo: filas; sin datos confirmados no se muestran fotos ni siluetas
-  $('#equipoLista').innerHTML = L.equipo.map((m) => `<li class="miembro"><span class="foto">Sin foto</span>
-    <div><strong>${esc(m.nombre)}</strong><small>${esc(m.cargo)} · ${esc(m.especialidad)}</small></div>
-    <a href="#solicitud" class="btn btn-linea btn-sm">Solicitar consulta</a></li>`).join('');
+  // Equipo: espacios reservados; aquí nunca se usan fotos de stock
+  $('#equipoLista').innerHTML = L.equipo.map((m) => `<li class="miembro revelar"><div class="miembro-foto"><span>Espacio para<br>foto oficial</span></div>
+    <p class="cargo">${esc(m.cargo)}</p><h3>${esc(m.nombre)}</h3><p class="esp">${esc(m.especialidad)}</p></li>`).join('');
 
   // Artículos
   const cats = ['Todos', ...new Set(L.articulos.map((a) => a.cat))];
@@ -282,8 +305,7 @@
     vi = 0; $('.asistente-pie').hidden = false; btnSig.disabled = false; pintar();
     $('#solicitud').scrollIntoView({ behavior: reducir ? 'auto' : 'smooth' });
   }
-  // "No sé qué área es" limpia cualquier área elegida antes
-  $('.fila-alterna').addEventListener('click', () => { delete est.area; delete est.areaPrevia; delete est.asunto; vi = 0; pintar(); });
 
   pintar();
+  observar();
 })();
