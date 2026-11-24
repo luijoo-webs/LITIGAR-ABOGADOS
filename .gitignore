@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.claude/
+node_modules/
+*.docx
+/logo.png
+.DS_Store
+Thumbs.db
+supabase/limpieza/
