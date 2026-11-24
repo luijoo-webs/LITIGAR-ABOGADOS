@@ -70,6 +70,7 @@
 
   // Áreas: pestañas subrayadas y panel
   const tabs = $('#areasTabs'), panel = $('#areaPanel');
+  const citaAreas = new Set(); // áreas elegidas para la cita (como un carrito)
   $('#areasCuenta').textContent = String(L.areas.length).padStart(2, '0');
   tabs.innerHTML = L.areas.map((a, i) => `<button class="pestana" role="tab" id="tab-${a.id}" aria-controls="areaPanel" aria-selected="${i === 0}" tabindex="${i ? -1 : 0}" data-i="${i}">${esc(a.corto)}</button>`).join('');
   const mostrarArea = (i) => {
@@ -79,7 +80,7 @@
     panel.innerHTML = `<figure class="area-foto"><img src="${foto(fotoArea[a.id], 1000)}" alt=""><figcaption class="ref">Imagen de referencia</figcaption>
         <div class="area-foto-texto"><span class="n">${String(i + 1).padStart(2, '0')}</span><h3>${esc(a.nombre)}</h3></div></figure>
       <div class="area-info"><p class="resumen-area">${esc(a.resumen)}</p><p class="ampliado">${esc(a.ampliado)}</p><p class="eyebrow claro">Asuntos frecuentes</p><ul class="asuntos">${a.temas.map((t) => `<li><button data-solicitar="${a.id}" data-asunto="${esc(t)}">${esc(t)}<span>Consultar →</span></button></li>`).join('')}</ul>
-      <div class="asuntos-pie"><span class="nota-prov">Provisional · se edita desde el panel</span><button class="btn btn-oro btn-sm" data-solicitar="${a.id}">Consultar sobre ${esc(a.corto.toLowerCase())}</button></div></div>`;
+      <div class="asuntos-pie"><span class="nota-prov">Provisional · se edita desde el panel</span><span class="asuntos-botones"><button class="btn btn-claro btn-sm" data-agregar="${a.id}" aria-pressed="${citaAreas.has(a.id)}">${citaAreas.has(a.id) ? '✓ En su cita' : '+ Añadir a mi cita'}</button><button class="btn btn-oro btn-sm" data-solicitar="${a.id}">Consultar sobre ${esc(a.corto.toLowerCase())}</button></span></div></div>`;
   };
   tabs.addEventListener('click', (e) => { const b = e.target.closest('.pestana'); if (b) mostrarArea(+b.dataset.i); });
   tabs.addEventListener('keydown', (e) => {
@@ -306,6 +307,111 @@
     $('#solicitud').scrollIntoView({ behavior: reducir ? 'auto' : 'smooth' });
   }
 
+  /* ===== Formulario de cita ===== */
+  const cf = $('#citaForm'), chips = $('#citaAreas'), cErr = $('#citaError');
+  const pintarChips = () => {
+    chips.innerHTML = L.areas.map((a) => `<button type="button" class="chip-area" data-chip="${a.id}" aria-pressed="${citaAreas.has(a.id)}">${citaAreas.has(a.id) ? '✓ ' : '+ '}${esc(a.corto)}</button>`).join('');
+    $('#citaVacio').hidden = citaAreas.size > 0;
+    const n = $('#ctaCuenta'); n.hidden = !citaAreas.size; n.textContent = citaAreas.size;
+    $$('[data-agregar]').forEach((b) => { const si = citaAreas.has(b.dataset.agregar); b.setAttribute('aria-pressed', si); b.textContent = si ? '✓ En su cita' : '+ Añadir a mi cita'; });
+  };
+  const alternarArea = (id) => { if (citaAreas.has(id)) citaAreas.delete(id); else citaAreas.add(id); pintarChips(); };
+  chips.addEventListener('click', (e) => { const b = e.target.closest('[data-chip]'); if (b) { alternarArea(b.dataset.chip); $(`[data-chip="${b.dataset.chip}"]`, chips).focus(); } });
+  // Aviso breve al añadir un área desde la sección de áreas
+  const aviso = document.createElement('div'); aviso.className = 'aviso-flot'; aviso.setAttribute('role', 'status'); document.body.appendChild(aviso);
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-agregar]'); if (!b) return;
+    const id = b.dataset.agregar, a = L.areas.find((x) => x.id === id);
+    alternarArea(id);
+    aviso.innerHTML = citaAreas.has(id) ? `${esc(a.corto)} se añadió a su cita · <a href="#cita">Ir al formulario →</a>` : `${esc(a.corto)} se quitó de su cita`;
+    aviso.classList.add('ver'); clearTimeout(aviso.t); aviso.t = setTimeout(() => aviso.classList.remove('ver'), 3200);
+  });
+  const hoy = new Date();
+  const iso = (d) => new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const limitesFecha = () => { $('#c-fecha').min = iso(hoy); $('#c-fecha').max = iso(new Date(hoy.getTime() + 120 * 864e5)); };
+  limitesFecha(); pintarChips();
+
+  cf.addEventListener('submit', async (e) => {
+    e.preventDefault(); cErr.textContent = '';
+    $$('.campo.mal', cf).forEach((x) => x.classList.remove('mal'));
+    const v = (id) => $('#' + id).value.trim();
+    const d = { nombre: v('c-nombre'), apellido: v('c-apellido'), correo: v('c-correo'), telefono: v('c-tel'), areas: [...citaAreas],
+      modalidad: ($('input[name=modalidad]:checked', cf) || {}).value, fecha_preferida: v('c-fecha'), franja: $('#c-franja').value,
+      mensaje: v('c-mensaje'), consentimiento: $('#c-consent').checked, web: v('c-web') };
+    const falla = (id, m) => { if (id) { $('#' + id).closest('.campo').classList.add('mal'); $('#' + id).focus(); } cErr.textContent = m; };
+    if (d.nombre.length < 2) return falla('c-nombre', 'Escriba su nombre.');
+    if (d.apellido.length < 2) return falla('c-apellido', 'Escriba su apellido.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correo)) return falla('c-correo', 'Revise el correo electrónico.');
+    if (!/^[+\d\s()-]{7,20}$/.test(d.telefono)) return falla('c-tel', 'Revise el número de teléfono.');
+    if (d.fecha_preferida && (d.fecha_preferida < $('#c-fecha').min || d.fecha_preferida > $('#c-fecha').max)) return falla('c-fecha', 'Elija una fecha entre hoy y los próximos cuatro meses.');
+    if (!d.consentimiento) return falla(null, 'Debe autorizar el tratamiento de datos para enviar la solicitud.');
+    if (d.web) return; // campo trampa: lo llenó un bot
+    const btn = $('.btn-enviar', cf); btn.disabled = true; btn.classList.add('cargando'); btn.firstChild.textContent = 'Enviando… ';
+    let codigo, real = false;
+    try {
+      if (C.supabaseUrl && C.supabaseKey) {
+        // La función solicitar_cita valida y guarda en el servidor; el público no puede leer la tabla.
+        const r = await fetch(`${C.supabaseUrl}/rest/v1/rpc/solicitar_cita`, {
+          method: 'POST', headers: { apikey: C.supabaseKey, Authorization: `Bearer ${C.supabaseKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p: Object.assign({}, d, { politica_version: C.politicaVersion || 'provisional-2026-11' }) }),
+        });
+        const t = await r.json().catch(() => null);
+        if (!r.ok) throw new Error((t && t.message) || 'Error ' + r.status);
+        codigo = t; real = true;
+      } else {
+        const db = L.store.leer() || L.semilla(); db.citas = db.citas || [];
+        codigo = `CIT-${hoy.getFullYear()}-${String(db.citas.length + 1).padStart(5, '0')}`;
+        db.citas.unshift(Object.assign({ id: codigo, estado: 'pendiente', creada: new Date().toISOString(), notas: '' }, d)); L.store.guardar(db);
+      }
+    } catch (err) {
+      btn.disabled = false; btn.classList.remove('cargando'); btn.firstChild.textContent = 'Enviar solicitud ';
+      cErr.innerHTML = `No pudimos enviar su solicitud${/Demasiadas|fecha|autoriz/.test(err.message) ? ': ' + esc(err.message) : ''}. Intente de nuevo o <a href="${c.whatsapp}" target="_blank" rel="noopener">escríbanos por WhatsApp</a>.`;
+      return;
+    }
+    const cuerpoCita = $('#citaCuerpo'), previo = cuerpoCita.innerHTML;
+    cuerpoCita.innerHTML = `<div class="cita-exito"><svg class="check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>
+      <h3 tabindex="-1" id="citaOk">Recibimos su solicitud, ${esc(d.nombre)}</h3><p>Su código de seguimiento es</p><div class="codigo">${esc(codigo)}</div>
+      <p>Una persona del equipo le contactará para confirmar el día y la hora. Hasta entonces la cita no está confirmada.</p>
+      ${real ? '' : '<p class="aviso-demo"><strong>Vista previa:</strong> se guardó solo en este navegador; no se envió a la firma.</p>'}
+      <button type="button" class="btn btn-linea btn-sm" id="citaOtra">Enviar otra solicitud</button></div>`;
+    $('#citaOk').focus({ preventScroll: true });
+    $('#citaOtra').addEventListener('click', () => { cuerpoCita.innerHTML = previo; citaAreas.clear(); cf.reset(); limitesFecha(); pintarChips(); });
+  });
+
+  /* ===== Movimiento ===== */
+  // Barra de progreso de lectura
+  const prog = $('#progreso');
+  addEventListener('scroll', () => { prog.style.transform = `scaleX(${scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight)})`; }, { passive: true });
+  if (!reducir) {
+    // Titulares que suben palabra por palabra
+    $$('h2.revelar').forEach((h) => {
+      if (h.children.length) return;
+      h.classList.add('partir');
+      h.innerHTML = h.textContent.trim().split(/\s+/).map((w, i) => `<span class="pal"><span style="--i:${i}">${esc(w)}</span></span>`).join(' ');
+    });
+    // Cifras que cuentan al aparecer
+    const obsCifra = new IntersectionObserver((ents) => ents.forEach((en) => {
+      if (!en.isIntersecting) return; obsCifra.unobserve(en.target);
+      const el = en.target, m = el.textContent.match(/^(\D*)(\d+)(.*)$/); if (!m) return;
+      const fin = +m[2], t0 = performance.now();
+      const paso = (t) => { const k = Math.min(1, (t - t0) / 1400); el.textContent = m[1] + Math.round(fin * (1 - Math.pow(1 - k, 3))) + m[3]; if (k < 1) requestAnimationFrame(paso); };
+      requestAnimationFrame(paso);
+    }), { threshold: .6 });
+    $$('.firma-datos dt').forEach((el) => obsCifra.observe(el));
+    // Foto del inicio: paralaje al bajar; el detalle sigue levemente al puntero
+    const heroImg = $('.hero-foto img'), det = $('.hero-detalle');
+    addEventListener('scroll', () => { if (scrollY < innerHeight) heroImg.style.translate = `0 ${scrollY * .25}px`; }, { passive: true });
+    if (matchMedia('(hover: hover)').matches) {
+      hero.addEventListener('pointermove', (e) => { det.style.translate = `${(e.clientX / innerWidth - .5) * -18}px ${(e.clientY / innerHeight - .5) * -14}px`; });
+      // Botones dorados con leve atracción magnética
+      $$('.btn-oro').forEach((b) => {
+        b.addEventListener('pointermove', (e) => { const r = b.getBoundingClientRect(); b.style.translate = `${(e.clientX - r.left - r.width / 2) * .12}px ${(e.clientY - r.top - r.height / 2) * .2}px`; });
+        b.addEventListener('pointerleave', () => (b.style.translate = ''));
+      });
+    }
+  }
+
   pintar();
   observar();
 })();
+

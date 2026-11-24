@@ -18,10 +18,13 @@
 
   // Permisos por rol (mismo criterio que las políticas RLS del esquema).
   const PERMISOS = {
-    admin: ['panel', 'solicitudes', 'clientes', 'casos', 'equipo', 'contenido', 'clasificacion', 'auditoria', 'convertir', 'asignar'],
-    asistente: ['panel', 'solicitudes', 'clientes', 'contenido', 'asignar'],
-    abogado: ['panel', 'solicitudes', 'clientes', 'casos', 'convertir'],
+    admin: ['panel', 'solicitudes', 'citas', 'clientes', 'casos', 'equipo', 'contenido', 'clasificacion', 'auditoria', 'convertir', 'asignar'],
+    asistente: ['panel', 'solicitudes', 'citas', 'clientes', 'contenido', 'asignar'],
+    abogado: ['panel', 'solicitudes', 'citas', 'clientes', 'casos', 'convertir'],
   };
+  const ESTADOS_CITA = { pendiente: 'Por confirmar', confirmada: 'Confirmada', reprogramar: 'Reprogramar', atendida: 'Atendida', cancelada: 'Cancelada' };
+  const MODALIDAD = { presencial: 'Presencial', videollamada: 'Videollamada', llamada: 'Llamada' };
+  const misCitas = () => (db.citas || []).filter((c) => yo.rol !== 'abogado' || c.asignado === yo.id);
   let yo = null;
   const puede = (p) => PERMISOS[yo.rol].includes(p);
   const quien = (id) => (db.equipo.find((u) => u.id === id) || {}).nombre || 'Sin asignar';
@@ -53,11 +56,11 @@
 
   // Trae todo lo que RLS deja ver a este usuario y lo deja con la misma forma que los datos de demostración.
   async function cargar() {
-    const [perf, pesp, sols, notas, clis, casos, acts, movs, reglas, esp] = await Promise.all([
+    const [perf, pesp, sols, notas, clis, casos, acts, movs, reglas, esp, citas] = await Promise.all([
       'perfiles?select=id,nombre,correo,rol&rol=not.is.null&activo=is.true', 'perfil_especialidades?select=*',
       'solicitudes?select=*&order=creada.desc', 'notas_solicitud?select=*&order=creada', 'clientes?select=*&order=creado.desc',
       'casos?select=*&order=abierto.desc', 'actividades_caso?select=*', 'movimientos_caso?select=*&order=creado',
-      'reglas_clasificacion?select=config', 'especialidades?select=id,publicada'].map((r) => api(r)));
+      'reglas_clasificacion?select=config', 'especialidades?select=id,publicada', 'citas?select=*&order=creada.desc'].map((r) => api(r)));
     const aud = yo.rol === 'admin' ? await api('auditoria?select=fecha,tabla,accion,actor_id&order=fecha.desc&limit=200') : [];
     const equipo = perf.map((p) => ({ id: p.id, nombre: p.nombre || p.correo, correo: p.correo, rol: p.rol,
       areas: pesp.filter((x) => x.perfil_id === p.id).map((x) => x.especialidad_id) }));
@@ -74,6 +77,7 @@
         titulo: c.titulo, estado: c.estado, abierto: c.abierto,
         actividades: acts.filter((a) => a.caso_id === c.id).map((a) => ({ fecha: a.fecha, texto: a.texto })),
         movimientos: movs.filter((m) => m.caso_id === c.id).map((m) => ({ fecha: m.creado, texto: m.texto })) })),
+      citas: citas.map((c) => Object.assign({}, c, { id: c.codigo, uuid: c.id, asignado: c.asignado_a })),
       auditoria: aud.map((a) => ({ fecha: a.fecha, quien: nombre(a.actor_id), accion: `${ACC[a.accion] || a.accion} ${a.tabla}` })),
       // Las áreas atendidas en la base de datos son las especialidades publicadas.
       reglas: Object.assign({}, (reglas[0] || {}).config, { areasAtendidas: esp.filter((e) => e.publicada).map((e) => e.id) }),
@@ -95,15 +99,16 @@
   function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('ver'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('ver'), 2600); }
 
   const MODULOS = [
-    ['panel', 'Panel', '◧'], ['solicitudes', 'Solicitudes', '✉'], ['clientes', 'Clientes', '◉'], ['casos', 'Casos', '⚖'],
+    ['panel', 'Panel', '◧'], ['solicitudes', 'Solicitudes', '✉'], ['citas', 'Citas', '◷'], ['clientes', 'Clientes', '◉'], ['casos', 'Casos', '⚖'],
     ['equipo', 'Equipo', '☷'], ['contenido', 'Contenido', '✎'], ['clasificacion', 'Clasificación', '⚙'], ['auditoria', 'Auditoría', '☰'],
   ];
   let actual = 'panel';
 
   function nav() {
-    const nuevas = misSolicitudes().filter((s) => s.estado === 'nueva' && !s.archivada).length;
+    const cuentas = { solicitudes: misSolicitudes().filter((s) => s.estado === 'nueva' && !s.archivada).length,
+      citas: misCitas().filter((c) => c.estado === 'pendiente').length };
     $('#nav').innerHTML = MODULOS.filter(([k]) => puede(k)).map(([k, t, i]) =>
-      `<button data-mod="${k}" ${k === actual ? 'aria-current="page"' : ''}><span class="ico" aria-hidden="true">${i}</span>${t}${k === 'solicitudes' && nuevas ? `<span class="cuenta">${nuevas}</span>` : ''}</button>`).join('');
+      `<button data-mod="${k}" ${k === actual ? 'aria-current="page"' : ''}><span class="ico" aria-hidden="true">${i}</span>${t}${cuentas[k] ? `<span class="cuenta">${cuentas[k]}</span>` : ''}</button>`).join('');
   }
   function ir(mod) {
     if (!puede(mod)) mod = 'panel';
@@ -135,7 +140,7 @@
     const cuenta = (e) => sol.filter((s) => s.estado === e).length;
     const kpis = [
       ['Nuevas solicitudes', cuenta('nueva'), 'var(--info)'], ['Pendientes de revisión', cuenta('pendiente'), 'var(--alerta)'],
-      ['Requieren evaluación', cuenta('requiere_evaluacion'), '#D97706'], ['Consultas calificadas', cuenta('calificada'), 'var(--ok)'],
+      ['Requieren evaluación', cuenta('requiere_evaluacion'), '#D97706'], ['Citas por confirmar', misCitas().filter((c) => c.estado === 'pendiente').length, '#9C6ADE'],
       ['Clientes registrados', db.clientes.length, 'var(--oro)'], ['Casos activos', casos.filter((c) => c.estado !== 'cerrado').length, 'var(--azul-800)'],
     ];
     const max = Math.max(1, ...Object.keys(L.estados).map(cuenta));
@@ -257,6 +262,57 @@
         db.clientes.unshift(cli); db.casos.unshift(caso); s.estado = 'convertida'; s.cliente = cli.id;
         auditar(`Convirtió ${s.id} en el cliente ${cli.id} y el caso ${caso.id}`); return `Creados ${cli.id} y ${caso.id}`;
       }, async () => `Creado el caso ${await api('rpc/convertir_solicitud', { method: 'POST', body: JSON.stringify({ p_solicitud: s.uuid }) })} con su cliente`, tras);
+    });
+  }
+
+  // Citas (formulario "Agendar cita" del sitio)
+  const chipCita = (e) => `<span class="chip cita-${e}">${ESTADOS_CITA[e] || e}</span>`;
+  const preferencia = (c) => c.fecha_preferida ? `${fd(c.fecha_preferida)}${c.franja ? ` · ${c.franja === 'manana' ? 'mañana' : 'tarde'}` : ''}` : 'Sin preferencia';
+  const filtroCita = { estado: 'activas' };
+  VISTAS.citas = (v) => {
+    v.innerHTML = `<p class="aviso">La fecha que elige el visitante es una preferencia. La cita queda confirmada cuando el equipo le contacta y marca aquí el estado "Confirmada".</p>
+      <div class="herramientas"><select id="ceFiltro" aria-label="Estado"><option value="activas">Por confirmar y reprogramar</option><option value="">Todas</option>${Object.entries(ESTADOS_CITA).map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select><span class="resultado" id="ceRes"></span></div>
+      <div class="tabla-envoltura"><table><thead><tr><th>Solicitante</th><th class="ocultar-movil">Áreas</th><th>Modalidad</th><th class="ocultar-movil">Preferencia</th><th>Estado</th></tr></thead><tbody id="ceFilas"></tbody></table></div>`;
+    $('#ceFiltro').value = filtroCita.estado;
+    const pintar = () => {
+      const f = filtroCita.estado;
+      const filas = misCitas().filter((c) => !f || (f === 'activas' ? ['pendiente', 'reprogramar'].includes(c.estado) : c.estado === f));
+      $('#ceRes').textContent = `${filas.length} cita${filas.length === 1 ? '' : 's'}`;
+      $('#ceFilas').innerHTML = filas.length ? filas.map((c) => `<tr data-cita="${c.id}" tabindex="0"><td><span class="nombre">${esc(c.nombre)} ${esc(c.apellido)}</span><span class="sub-linea"><span class="cod">${c.id}</span> · ${fh(c.creada)}</span></td>
+        <td class="ocultar-movil">${c.areas.length ? c.areas.map((a) => esc(areaNombre(a))).join(', ') : '—'}</td><td>${MODALIDAD[c.modalidad] || '—'}</td><td class="ocultar-movil">${preferencia(c)}</td><td>${chipCita(c.estado)}</td></tr>`).join('')
+        : '<tr><td colspan="5" class="vacio" style="text-align:center">No hay solicitudes de cita con este filtro.</td></tr>';
+    };
+    $('#ceFiltro').addEventListener('change', (e) => { filtroCita.estado = e.target.value; pintar(); });
+    $('#ceFilas').addEventListener('click', (e) => { const r = e.target.closest('[data-cita]'); if (r) detalleCita(r.dataset.cita); });
+    $('#ceFilas').addEventListener('keydown', (e) => { if (e.key === 'Enter') { const r = e.target.closest('[data-cita]'); if (r) detalleCita(r.dataset.cita); } });
+    pintar();
+  };
+  function detalleCita(id) {
+    const c = (db.citas || []).find((x) => x.id === id);
+    if (!c) return;
+    const local = (iso) => { if (!iso) return ''; const d = new Date(iso); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+    abrir(`<div class="det-cabeza"><span class="cod">${c.id} · ${fh(c.creada)}</span><h2>${esc(c.nombre)} ${esc(c.apellido)}</h2>${chipCita(c.estado)}</div>
+      <dl class="det-grid">
+        <div><dt>Teléfono</dt><dd><a href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a></dd></div><div><dt>Correo</dt><dd><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a></dd></div>
+        <div><dt>Modalidad</dt><dd>${MODALIDAD[c.modalidad] || '—'}</dd></div><div><dt>Preferencia</dt><dd>${preferencia(c)}</dd></div>
+        <div style="grid-column:1/-1"><dt>Áreas de interés</dt><dd>${c.areas.length ? c.areas.map((a) => esc(areaNombre(a))).join(', ') : 'No indicó'}</dd></div>
+      </dl>
+      <div class="det-texto">${c.mensaje ? esc(c.mensaje) : '<span class="vacio">Sin mensaje.</span>'}</div>
+      <form class="det-seccion" id="ctForm"><h3>Gestión</h3><div class="acciones">
+        <label>Estado<select id="ctEstado">${Object.entries(ESTADOS_CITA).map(([k, t]) => `<option value="${k}" ${k === c.estado ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+        <label>Fecha y hora confirmadas<input type="datetime-local" id="ctFecha" value="${local(c.fecha_confirmada)}"></label>
+        <label>Atiende<select id="ctAsig" ${puede('asignar') ? '' : 'disabled'}><option value="">Sin asignar</option>${db.equipo.filter((u) => u.rol === 'abogado' || u.rol === 'admin').map((u) => `<option value="${u.id}" ${u.id === c.asignado ? 'selected' : ''}>${esc(u.nombre)}</option>`).join('')}</select></label>
+      </div>
+      <label class="ancho" style="display:grid;gap:6px;margin-top:12px;font-size:.8rem;font-weight:700">Notas internas<textarea id="ctNotas" maxlength="2000" rows="3">${esc(c.notas || '')}</textarea></label>
+      <div class="botonera"><button class="btn btn-primario">Guardar cambios</button></div></form>`);
+    $('#ctForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const estado = $('#ctEstado').value, fv = $('#ctFecha').value, fecha = fv ? new Date(fv).toISOString() : null, asig = $('#ctAsig').value || null, notas = $('#ctNotas').value.trim();
+      if (estado === 'confirmada' && !fecha) { toast('Indique la fecha y hora confirmadas'); return; }
+      hacer('Cita actualizada', () => {
+        Object.assign(c, { estado, fecha_confirmada: fecha, asignado: asig, notas }); auditar(`Actualizó la cita ${c.id}: ${ESTADOS_CITA[estado]}`);
+      }, () => editar('citas', c.uuid, Object.assign({ estado, fecha_confirmada: fecha, notas }, puede('asignar') ? { asignado_a: asig } : {})),
+      () => { VISTAS[actual]($('#vista')); detalleCita(id); });
     });
   }
 
@@ -452,6 +508,14 @@
   }
   function entrarDemo() {
     modo = 'demo'; db = L.store.leer(); if (!db) { db = L.semilla(); guardar(); }
+    if (!db.citas) { // citas ficticias para presentar el módulo
+      const dia = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+      db.citas = [
+        { id: 'CIT-2026-00002', nombre: 'Persona', apellido: 'de ejemplo 1', correo: 'ejemplo1@correo.test', telefono: '300 000 0001', areas: ['laboral'], modalidad: 'videollamada', fecha_preferida: dia(2), franja: 'tarde', mensaje: 'Dato ficticio de demostración.', estado: 'pendiente', creada: new Date().toISOString(), notas: '', asignado: null },
+        { id: 'CIT-2026-00001', nombre: 'Persona', apellido: 'de ejemplo 2', correo: 'ejemplo2@correo.test', telefono: '300 000 0002', areas: ['familia', 'civil'], modalidad: 'presencial', fecha_preferida: null, franja: '', mensaje: '', estado: 'confirmada', fecha_confirmada: dia(3) + 'T15:00:00Z', creada: new Date(Date.now() - 864e5).toISOString(), notas: '', asignado: null },
+      ];
+      guardar();
+    }
     yo = db.equipo[0]; $('#rol').value = yo.id;
     try { sessionStorage.setItem('litigar-demo', '1'); } catch (e) {}
     mostrarApp();
