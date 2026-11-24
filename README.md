@@ -35,17 +35,19 @@ Abrir http://localhost:5510 para el sitio y http://localhost:5510/admin/ para el
 
 | Funciona en el preview | Pendiente para producción |
 |---|---|
-| Sitio completo: áreas, proceso, equipo, centro de conocimiento y preguntas frecuentes | Autenticación real del panel (Supabase Auth) |
-| Asistente de captación con validación, consentimiento y clasificación | Guardar las solicitudes en Supabase (basta con llenar `config.js`) |
-| Panel en modo demostración: solicitudes, clientes, casos, equipo, contenido, reglas y auditoría | Correos de confirmación y aviso (Edge Function + SMTP) |
-| Una solicitud enviada desde el sitio aparece en el panel del mismo navegador | Subida de documentos al bucket privado |
+| Sitio completo: áreas, proceso, equipo, artículos, contacto y preguntas frecuentes | Autenticación real del panel (Supabase Auth) |
+| Asistente de solicitud con validación y consentimiento: **guarda en Supabase** mediante `crear_solicitud()`, que clasifica en el servidor | Que el panel lea las solicitudes reales (hoy muestra datos de demostración) |
+| Base de datos de Litigar aplicada en Supabase, con RLS en las 18 tablas y los buckets `documentos` (privado) y `sitio` | Correos de confirmación y aviso (Edge Function + SMTP) |
+| Panel en modo demostración: solicitudes, clientes, casos, equipo, contenido, reglas y auditoría | Subida de documentos al bucket privado |
 | | Alertas programadas (pg_cron) |
 
-En el modo demostración los datos son **ficticios** y se guardan solo en el navegador (localStorage). El sitio y el panel lo indican en pantalla.
+El panel trabaja en modo demostración: sus datos son **ficticios** y se guardan solo en el navegador (localStorage), y lo indica en pantalla. Las solicitudes del sitio van a Supabase y no aparecen en ese panel hasta conectar su autenticación. Si se vacía `config.js`, el sitio vuelve al modo demostración.
 
 Los textos sobre la firma marcados como *Provisional* o *Por confirmar* deben reemplazarse con información confirmada por Litigar. No se inventaron nombres, cifras ni casos: las áreas y los temas salen del Instagram de la firma.
 
 ## Conectar Supabase
+
+Pasos 1 y 2 hechos el 2026-11-24 en el proyecto `kycetxzvdhaqjkxcduwq`; quedan el 3 y el 4.
 
 1. Ejecutar las migraciones de `supabase/migrations/` en orden, en el SQL Editor o con `supabase db push`.
 2. En `preview/config.js`, poner la URL del proyecto y la **clave publicable** (`sb_publishable_…` o `anon`). Nunca poner la `service_role`.
