@@ -10,9 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://images.unsplash.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Source+Serif+4:opsz,wght@8..60,400..600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Syne:wght@500..800&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="https://images.unsplash.com/photo-1714974528737-3e6c7e4d11af?auto=format&fit=crop&w=1600&q=72">
-<link rel="stylesheet" href="assets/css/sitio.css?v=6">
+<link rel="stylesheet" href="assets/css/sitio.css?v=9">
 </head>
 <body>
 <div class="progreso" id="progreso" aria-hidden="true"></div>
@@ -27,7 +27,7 @@
     <button class="menu-boton" id="menuBoton" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
     <nav class="menu" id="menu" aria-label="Principal">
       <a href="#firma">Firma</a>
-      <a href="#areas">Áreas</a>
+      <a href="#areas">Servicios</a>
       <a href="#trabajamos">Cómo trabajamos</a>
       <a href="#equipo">Equipo</a>
       <a href="#contacto">Contacto</a>
@@ -40,14 +40,15 @@
       <a href="#" data-wa class="icono-btn" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2.2A9.8 9.8 0 0 0 3.6 17l-1.4 4.8 5-1.3A9.8 9.8 0 1 0 12 2.2Zm0 17.8a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8.9c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.6.3 2.7 2.7 0 0 0-.9 2c0 1.2.9 2.3 1 2.5.1.2 1.7 2.6 4.1 3.6 1.5.7 2.1.7 2.9.6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1l-.3-.3Z"/></svg>
       </a>
-      <a href="#cita" class="btn btn-oro btn-sm cabecera-cta">Agendar cita<span class="cta-cuenta" id="ctaCuenta" hidden></span></a>
+      <button type="button" class="icono-btn carrito-btn" id="carritoBtn" aria-label="Ver mi solicitud"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Zm4 0V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span class="cta-cuenta" id="ctaCuenta" hidden></span></button>
+      <a href="#cita" class="btn btn-oro btn-sm cabecera-cta">Agendar cita</a>
     </div>
   </div>
 </header>
 
 <main id="contenido">
 
-<!-- INICIO: foto a sangre con texto superpuesto -->
+<!-- INICIO: poco texto, foto a sangre y sello giratorio -->
 <section class="hero" id="inicio">
   <figure class="hero-foto">
     <img src="https://images.unsplash.com/photo-1714974528737-3e6c7e4d11af?auto=format&fit=crop&w=1600&q=72"
@@ -57,155 +58,91 @@
   </figure>
   <div class="contenedor hero-in">
     <p class="eyebrow claro entra">Litigar Group · Derecho &amp; Finanzas</p>
-    <h1 class="entra">Los problemas legales rara vez empiezan siendo grandes.</h1>
-    <p class="hero-lead entra">Abogados y contadores que le orientan desde el primer momento, para que sepa dónde está parado y qué puede hacer.</p>
+    <h1 class="hero-titulo" aria-label="Especialidad. Estrategia. Cercanía.">
+      <span class="linea"><span>Especialidad.</span></span>
+      <span class="linea oro"><span>Estrategia.</span></span>
+      <span class="linea"><span>Cercanía.</span></span>
+    </h1>
     <div class="hero-acciones entra">
       <a href="#cita" class="btn btn-oro">Agendar cita <span class="f" aria-hidden="true">→</span></a>
-      <a href="#solicitud" class="btn btn-claro">Contar mi caso</a>
+      <a href="#areas" class="btn btn-claro">Ver servicios</a>
     </div>
   </div>
-  <figure class="hero-detalle entra" aria-hidden="true">
-    <img src="https://images.unsplash.com/photo-1763729805496-b5dbf7f00c79?auto=format&fit=crop&w=600&q=70" alt="">
-  </figure>
+  <a href="#firma" class="sello-giro entra" aria-label="Bajar a conocer la firma">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><defs><path id="circulo" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs>
+      <text><textPath href="#circulo">ABOGADOS &amp; ASESORES · DERECHO &amp; FINANZAS ·</textPath></text></svg>
+    <span class="sello-flecha" aria-hidden="true">↓</span>
+  </a>
 </section>
 
-<!-- Áreas rápidas: panel que se monta sobre el hero -->
-<div class="contenedor rapido-envoltura">
-  <nav class="rapido revelar" aria-label="¿Qué necesita resolver?">
-    <p class="rapido-titulo">¿Qué necesita resolver?</p>
-    <ul id="resolver"></ul>
-  </nav>
-</div>
-
-<!-- FIRMA: composición partida con foto recortada -->
+<!-- FIRMA: dos fotos en movimiento, sello y cifras -->
 <section class="seccion firma" id="firma">
   <div class="contenedor firma-grid">
-    <figure class="foto foto-firma revelar">
-      <img src="https://images.unsplash.com/photo-1758518731462-d091b0b4ed0d?auto=format&fit=crop&w=1100&q=72" loading="lazy" alt="Profesionales revisando un caso en una sala de reuniones">
-      <figcaption class="ref">Imagen de referencia</figcaption>
-    </figure>
+    <div class="firma-visual">
+      <figure class="foto fv-a cortina" data-vel="-0.06">
+        <img src="https://images.unsplash.com/photo-1758518731462-d091b0b4ed0d?auto=format&fit=crop&w=1100&q=72" loading="lazy" alt="Profesionales revisando un caso en una sala de reuniones">
+        <figcaption class="ref">Imagen de referencia</figcaption>
+      </figure>
+      <figure class="foto fv-b cortina" data-vel="0.08">
+        <img src="https://images.unsplash.com/photo-1763729805496-b5dbf7f00c79?auto=format&fit=crop&w=700&q=72" loading="lazy" alt="Firma de un documento">
+      </figure>
+      <div class="fv-etiqueta revelar"><span>Desde el primer momento</span><strong>Derecho + Finanzas</strong></div>
+    </div>
     <div class="firma-texto">
       <p class="eyebrow revelar">Sobre Litigar</p>
-      <h2 class="revelar">Una firma donde el derecho y las finanzas trabajan juntos</h2>
-      <p class="revelar">Somos una firma de abogados y contadores especialistas en Derecho &amp; Finanzas. Detrás de cada asunto legal suele haber también una decisión económica, y la atendemos completa.</p>
+      <h2 class="revelar">El derecho y las finanzas, en el mismo equipo</h2>
+      <p class="revelar">Abogados y contadores especialistas en Derecho &amp; Finanzas. Detrás de cada asunto legal suele haber una decisión económica, y la atendemos completa.</p>
       <dl class="firma-datos revelar">
         <div><dt>+250</dt><dd>casos exitosos, según el perfil de la firma <span class="nota-prov">Por confirmar</span></dd></div>
         <div><dt>5</dt><dd>áreas de práctica</dd></div>
       </dl>
     </div>
   </div>
+  <div class="palabras" aria-hidden="true"><div class="palabras-pista" id="palabras"></div></div>
 </section>
 
-<!-- Banda con columnas: el símbolo del logo, a sangre -->
-<section class="banda" aria-label="Principios de la firma">
-  <img class="banda-foto" src="https://images.unsplash.com/photo-1483600516620-7254872369ae?auto=format&fit=crop&w=2000&q=70" loading="lazy" alt="">
-  <span class="ref">Imagen de referencia</span>
-  <div class="contenedor banda-in">
-    <p class="banda-lema revelar">Especialidad. <span>Estrategia.</span> Cercanía.</p>
-    <p class="banda-pie revelar">Los tres principios con los que la firma se presenta.</p>
-  </div>
-</section>
-
-<!-- ÁREAS: sección oscura con foto por especialidad -->
-<section class="seccion oscura" id="areas">
+<!-- SERVICIOS: galería que se expande; cada servicio se añade a la solicitud -->
+<section class="seccion oscura servicios" id="areas">
   <div class="contenedor">
     <div class="cabeza-seccion">
       <div>
-        <p class="eyebrow claro">Áreas de práctica <span class="cuenta" id="areasCuenta"></span></p>
-        <h2>En qué le podemos ayudar</h2>
+        <p class="eyebrow claro revelar">Servicios <span class="cuenta" id="areasCuenta"></span></p>
+        <h2 class="revelar">Elija lo que necesita resolver</h2>
       </div>
-      <p class="nota-prov claro">Áreas tomadas de las publicaciones de la firma. Descripciones provisionales.</p>
+      <p class="apoyo claro revelar">Abra un área y añada los servicios a su solicitud con <strong>+</strong>. Al final pide su cita o cotización en un solo formulario.</p>
     </div>
-    <div class="pestanas" id="areasTabs" role="tablist" aria-label="Áreas de práctica"></div>
-    <div class="area-panel" id="areaPanel" role="tabpanel" aria-live="polite"></div>
+    <div class="galeria" id="galeria"></div>
+    <p class="nota-prov claro galeria-nota">Áreas tomadas de las publicaciones de la firma. Descripciones provisionales.</p>
   </div>
 </section>
 
-<!-- CÓMO TRABAJAMOS: dos fotos superpuestas y pasos -->
-<section class="seccion" id="trabajamos">
-  <div class="contenedor trabajo-grid">
-    <div class="collage revelar">
-      <figure class="foto collage-a">
-        <img src="https://images.unsplash.com/photo-1758519288550-1975537cff9a?auto=format&fit=crop&w=1000&q=72" loading="lazy" alt="Asesor conversando con un cliente">
-        <figcaption class="ref">Imagen de referencia</figcaption>
-      </figure>
-      <figure class="foto collage-b">
-        <img src="https://images.unsplash.com/photo-1564846824194-346b7871b855?auto=format&fit=crop&w=700&q=72" loading="lazy" alt="Revisión de un documento">
-      </figure>
+<!-- CÓMO TRABAJAMOS: relato con scroll; la foto cambia con cada paso -->
+<section class="seccion proceso" id="trabajamos">
+  <div class="contenedor proceso-grid">
+    <div class="proceso-visual" aria-hidden="true">
+      <div class="proceso-marco" id="procesoFotos"></div>
+      <span class="proceso-num" id="procesoNum">01</span>
     </div>
-    <div>
+    <div class="proceso-texto">
       <p class="eyebrow revelar">Cómo trabajamos</p>
       <h2 class="revelar">De su primera pregunta a una respuesta clara</h2>
       <ol class="pasos" id="pasos"></ol>
-      <p class="apoyo pequeno">El formulario ordena su solicitud por área y urgencia para que llegue a la persona indicada. No es un diagnóstico jurídico ni decide si la firma acepta el caso.</p>
     </div>
   </div>
 </section>
 
-<!-- EQUIPO: espacios reservados para las fotos oficiales -->
-<section class="seccion seccion-blanca" id="equipo">
+<!-- EQUIPO: espacios para las fotos oficiales (nunca stock) -->
+<section class="seccion equipo-seccion" id="equipo">
+  <span class="eco" aria-hidden="true" data-eco>EQUIPO</span>
   <div class="contenedor">
     <div class="cabeza-seccion">
       <div>
-        <p class="eyebrow">Equipo</p>
-        <h2>Quién atiende su caso</h2>
+        <p class="eyebrow claro revelar">Equipo</p>
+        <h2 class="revelar">Quién atiende su caso</h2>
       </div>
-      <p class="apoyo">Aquí irán las fotografías oficiales del equipo de Litigar. No usamos fotos de stock para representar a personas de la firma.</p>
+      <p class="apoyo claro revelar">Aquí irán las fotografías oficiales del equipo de Litigar. No usamos fotos de stock para representar a personas de la firma.</p>
     </div>
     <ul class="equipo" id="equipoLista"></ul>
-  </div>
-</section>
-
-<!-- CITA: formulario de asesoría y cita (guarda en Supabase con solicitar_cita) -->
-<section class="cita" id="cita">
-  <img class="cita-fondo" src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=2000&q=65" loading="lazy" alt="">
-  <span class="ref">Imagen de referencia</span>
-  <div class="contenedor cita-grid">
-    <div class="cita-intro">
-      <p class="eyebrow claro revelar">Agendar cita</p>
-      <h2 class="revelar partir">Solicite una asesoría personalizada</h2>
-      <p class="cita-lead revelar">Déjenos sus datos y una persona del equipo le contactará para confirmar el día, la hora y la modalidad de su cita.</p>
-      <ol class="cita-pasos">
-        <li class="revelar"><span>01</span><div><strong>Elija áreas y modalidad</strong><small>Presencial, videollamada o llamada.</small></div></li>
-        <li class="revelar"><span>02</span><div><strong>Proponga una fecha</strong><small>Es una preferencia: la ajustamos con usted.</small></div></li>
-        <li class="revelar"><span>03</span><div><strong>Le confirmamos la cita</strong><small>Por teléfono o correo, con un código de seguimiento.</small></div></li>
-      </ol>
-    </div>
-    <form class="cita-form revelar" id="citaForm" novalidate>
-      <div class="cita-cuerpo" id="citaCuerpo">
-        <div class="cita-bloque">
-          <p class="cita-etq">Áreas de interés</p>
-          <div class="chips" id="citaAreas" role="group" aria-label="Áreas de interés"></div>
-          <p class="cita-vacio" id="citaVacio">Ninguna todavía. Elija las áreas o cuéntenos en el mensaje.</p>
-        </div>
-        <div class="campos-dos">
-          <div class="campo"><label for="c-nombre">Nombre *</label><input id="c-nombre" maxlength="80" autocomplete="given-name" required></div>
-          <div class="campo"><label for="c-apellido">Apellido *</label><input id="c-apellido" maxlength="80" autocomplete="family-name" required></div>
-        </div>
-        <div class="campos-dos">
-          <div class="campo"><label for="c-correo">Correo electrónico *</label><input id="c-correo" type="email" maxlength="120" autocomplete="email" required></div>
-          <div class="campo"><label for="c-tel">Teléfono *</label><input id="c-tel" type="tel" maxlength="20" autocomplete="tel" required></div>
-        </div>
-        <fieldset class="cita-bloque modalidad">
-          <legend class="cita-etq">¿Cómo prefiere la cita?</legend>
-          <div class="modos">
-            <label class="modo"><input type="radio" name="modalidad" value="presencial"><span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 21V9l8-6 8 6v12M9 21v-6h6v6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Presencial</span></label>
-            <label class="modo"><input type="radio" name="modalidad" value="videollamada" checked><span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 7h12v10H3zM15 10l6-3v10l-6-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Videollamada</span></label>
-            <label class="modo"><input type="radio" name="modalidad" value="llamada"><span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Llamada</span></label>
-          </div>
-        </fieldset>
-        <div class="campos-dos">
-          <div class="campo"><label for="c-fecha">Fecha preferida</label><input id="c-fecha" type="date"></div>
-          <div class="campo"><label for="c-franja">Franja</label><select id="c-franja"><option value="">Sin preferencia</option><option value="manana">Mañana</option><option value="tarde">Tarde</option></select></div>
-        </div>
-        <div class="campo"><label for="c-mensaje">Mensaje (opcional)</label><textarea id="c-mensaje" maxlength="2000" rows="4" placeholder="Cuéntenos brevemente en qué podemos ayudarle"></textarea></div>
-        <label class="consentimiento"><input type="checkbox" id="c-consent"><span>Autorizo a Litigar Group S.A.S. a tratar mis datos personales para atender esta solicitud, de acuerdo con la <button type="button" data-modal="datos">política de tratamiento de datos</button>. *</span></label>
-        <div class="trampa" aria-hidden="true"><label>No llenar este campo<input id="c-web" tabindex="-1" autocomplete="off"></label></div>
-        <p class="obligatorios">Los campos con * son obligatorios. La fecha es una preferencia; la cita queda confirmada cuando el equipo le contacte.</p>
-        <p class="error" id="citaError" role="alert"></p>
-        <button class="btn btn-oro btn-enviar" type="submit">Enviar solicitud <span class="f" aria-hidden="true">→</span></button>
-      </div>
-    </form>
   </div>
 </section>
 
@@ -226,38 +163,63 @@
   </div>
 </section>
 
-<!-- SOLICITUD -->
-<section class="seccion seccion-blanca" id="solicitud">
-  <div class="contenedor">
-    <div class="cabeza-seccion">
-      <div>
-        <p class="eyebrow">Solicitar consulta</p>
-        <h2>Cuéntenos su situación</h2>
+<!-- SOLICITUD: cita o cotización, con los servicios del carrito (guarda con solicitar_cita) -->
+<section class="cita" id="cita">
+  <img class="cita-fondo" src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=2000&q=65" loading="lazy" alt="">
+  <span class="ref">Imagen de referencia</span>
+  <div class="contenedor cita-grid">
+    <div class="cita-intro">
+      <p class="eyebrow claro revelar">Su solicitud</p>
+      <h2 class="revelar">Pida su cita o cotización</h2>
+      <p class="cita-lead revelar">Déjenos sus datos y una persona del equipo le contactará para confirmar el día, la hora y la modalidad, o para enviarle la cotización.</p>
+      <ol class="cita-pasos">
+        <li class="revelar"><span>01</span><div><strong>Añada servicios</strong><small>Desde la sección de servicios, o cuéntenos en el mensaje.</small></div></li>
+        <li class="revelar"><span>02</span><div><strong>Elija cita o cotización</strong><small>Para la cita, proponga modalidad y fecha.</small></div></li>
+        <li class="revelar"><span>03</span><div><strong>Le respondemos</strong><small>Por teléfono o correo, con un código de seguimiento.</small></div></li>
+      </ol>
+    </div>
+    <form class="cita-form revelar" id="citaForm" novalidate>
+      <div class="cita-cuerpo" id="citaCuerpo">
+        <div class="tipo" role="radiogroup" aria-label="Tipo de solicitud">
+          <label><input type="radio" name="tipo" value="cita" checked><span>Agendar cita</span></label>
+          <label><input type="radio" name="tipo" value="cotizacion"><span>Pedir cotización</span></label>
+          <i class="tipo-marca" aria-hidden="true"></i>
+        </div>
+        <div class="cita-bloque">
+          <p class="cita-etq">Servicios de interés <span class="cuenta-mini" id="citaCuenta"></span></p>
+          <ul class="chips" id="citaServicios"></ul>
+          <p class="cita-vacio" id="citaVacio">Ninguno todavía. <a href="#areas">Explore los servicios</a> y agréguelos, o cuéntenos en el mensaje.</p>
+        </div>
+        <div class="campos-dos">
+          <div class="campo"><label for="c-nombre">Nombre *</label><input id="c-nombre" maxlength="80" autocomplete="given-name" required></div>
+          <div class="campo"><label for="c-apellido">Apellido *</label><input id="c-apellido" maxlength="80" autocomplete="family-name" required></div>
+        </div>
+        <div class="campos-dos">
+          <div class="campo"><label for="c-correo">Correo electrónico *</label><input id="c-correo" type="email" maxlength="120" autocomplete="email" required></div>
+          <div class="campo"><label for="c-tel">Teléfono *</label><input id="c-tel" type="tel" maxlength="20" autocomplete="tel" required></div>
+        </div>
+        <div class="solo-cita" id="soloCita">
+          <fieldset class="cita-bloque modalidad">
+            <legend class="cita-etq">¿Cómo prefiere la cita?</legend>
+            <div class="modos">
+              <label class="modo"><input type="radio" name="modalidad" value="presencial"><span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 21V9l8-6 8 6v12M9 21v-6h6v6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Presencial</span></label>
+              <label class="modo"><input type="radio" name="modalidad" value="videollamada" checked><span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 7h12v10H3zM15 10l6-3v10l-6-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Videollamada</span></label>
+              <label class="modo"><input type="radio" name="modalidad" value="llamada"><span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Llamada</span></label>
+            </div>
+          </fieldset>
+          <div class="campos-dos">
+            <div class="campo"><label for="c-fecha">Fecha preferida</label><input id="c-fecha" type="date"></div>
+            <div class="campo"><label for="c-franja">Franja</label><select id="c-franja"><option value="">Sin preferencia</option><option value="manana">Mañana</option><option value="tarde">Tarde</option></select></div>
+          </div>
+        </div>
+        <div class="campo"><label for="c-mensaje">Mensaje (opcional)</label><textarea id="c-mensaje" maxlength="2000" rows="4" placeholder="Cuéntenos qué quiere resolver o en qué podemos ayudarle"></textarea></div>
+        <label class="consentimiento"><input type="checkbox" id="c-consent"><span>Autorizo a Litigar Group S.A.S. a tratar mis datos personales para atender esta solicitud, de acuerdo con la <button type="button" data-modal="datos">política de tratamiento de datos</button>. *</span></label>
+        <div class="trampa" aria-hidden="true"><label>No llenar este campo<input id="c-web" tabindex="-1" autocomplete="off"></label></div>
+        <p class="obligatorios" id="citaNota">Los campos con * son obligatorios. La fecha es una preferencia; la cita queda confirmada cuando el equipo le contacte.</p>
+        <p class="error" id="citaError" role="alert"></p>
+        <button class="btn btn-oro btn-enviar" type="submit"><span id="citaBoton">Enviar solicitud</span> <span class="f" aria-hidden="true">→</span></button>
       </div>
-      <p class="apoyo">Preguntas cortas. Su solicitud llega ordenada al equipo, que revisa si podemos ayudarle. Enviarla no le compromete a nada.</p>
-    </div>
-    <div class="solicitud-grid">
-      <form class="asistente" id="asistente" novalidate>
-        <div class="asistente-cabeza">
-          <span id="pasoTexto">Paso 1 de 8</span>
-          <div class="asistente-barra"><span id="pasoBarra"></span></div>
-        </div>
-        <div class="asistente-cuerpo" id="asistenteCuerpo"></div>
-        <div class="asistente-pie">
-          <button type="button" class="btn btn-texto" id="btnAtras">← Atrás</button>
-          <button type="button" class="btn btn-tinta" id="btnSiguiente">Continuar</button>
-        </div>
-      </form>
-      <aside class="resumen" id="resumen" aria-label="Resumen de su consulta">
-        <button type="button" class="resumen-cabeza" id="resumenBoton" aria-expanded="false">Tu consulta <span id="resumenCuenta">0 de 8</span></button>
-        <dl class="resumen-lista" id="resumenLista"></dl>
-        <ul class="garantias">
-          <li>Confidencial: solo la ve el equipo de la firma.</li>
-          <li>Una persona revisa cada caso.</li>
-          <li>¿Prefiere hablar ya? <a href="#" data-wa target="_blank" rel="noopener">WhatsApp</a></li>
-        </ul>
-      </aside>
-    </div>
+    </form>
   </div>
 </section>
 
@@ -331,9 +293,9 @@
   <div id="modalCuerpo"></div>
 </dialog>
 
-<script src="config.js?v=6"></script>
-<script src="assets/js/datos.js?v=6"></script>
-<script src="assets/js/demo.js?v=6"></script>
-<script src="assets/js/sitio.js?v=6"></script>
+<script src="config.js?v=7"></script>
+<script src="assets/js/datos.js?v=7"></script>
+<script src="assets/js/demo.js?v=7"></script>
+<script src="assets/js/sitio.js?v=8"></script>
 </body>
 </html>

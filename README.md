@@ -9,6 +9,7 @@ Sitio web y sistema administrativo de **Litigar Group S.A.S. · Abogados & Aseso
 ## Estructura
 
 ```
+index.html                Redirige a preview/ (GitHub Pages publica la raíz)
 preview/                  Sitio público y panel (HTML, CSS y JS sin compilación)
   index.html              Página pública
   admin/index.html        Panel administrativo (Supabase Auth o modo demostración)
@@ -37,7 +38,7 @@ Abrir http://localhost:5510 para el sitio y http://localhost:5510/admin/ para el
 |---|---|
 | Sitio completo: áreas, proceso, equipo, artículos, contacto y preguntas frecuentes | Crear el primer administrador (paso 3 de abajo) |
 | Asistente de solicitud con validación y consentimiento: **guarda en Supabase** mediante `crear_solicitud()`, que clasifica en el servidor | Invitar integrantes desde el panel (requiere Edge Function) |
-| Formulario **Agendar cita** (áreas de interés, modalidad, fecha preferida): guarda en Supabase con `solicitar_cita()`; el panel las gestiona en el módulo Citas | Calendario con disponibilidad real (hoy la fecha es una preferencia que el equipo confirma) |
+| Carrito de servicios (se añaden desde la galería de Servicios) y **un solo formulario** para pedir cita o cotización: guarda en Supabase con `solicitar_cita()` (`tipo`, `servicios`); el panel las gestiona en el módulo Citas | Calendario con disponibilidad real (hoy la fecha es una preferencia que el equipo confirma) |
 | Base de datos de Litigar aplicada en Supabase, con RLS en las 18 tablas y los buckets `documentos` (privado) y `sitio` | Correos de confirmación y aviso (Edge Function + SMTP) |
 | Panel conectado: inicio de sesión con Supabase Auth; lee y edita solicitudes, notas, clientes, casos, actividades, reglas y auditoría con los permisos de RLS | Subida de documentos al bucket privado |
 | Modo demostración del panel con datos ficticios (solo en el navegador) | Editar el contenido del sitio desde el panel (hoy se edita en `datos.js`) |

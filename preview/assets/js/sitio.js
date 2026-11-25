@@ -5,9 +5,14 @@
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const puntero = matchMedia('(hover: hover)').matches;
   const fecha = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
   const c = L.contacto;
   const flecha = '<span class="f" aria-hidden="true">→</span>';
+  // Fotografías de referencia (Unsplash) mientras llegan las de la firma
+  const foto = (id, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=72`;
+  const fotoArea = { familia: '1562564055-71e051d33c19', laboral: '1551135049-8a33b5883817', civil: '1564846824194-346b7871b855',
+    'seguridad-social': '1758518729912-bf3a84c400e0', tributario: '1520607162513-77705c0f0d4a' };
 
   $$('[data-wa]').forEach((a) => (a.href = c.whatsapp));
   $('#anio').textContent = new Date().getFullYear();
@@ -17,11 +22,9 @@
   const bloque = ['Consulta inicial', ...L.areas.map((a) => a.corto), c.telefonos[0]].map((t) => `<span>${esc(t)}</span>`).join(sep) + sep;
   $('#marquesina').innerHTML = bloque + `<span aria-hidden="true" style="display:contents">${bloque}</span>`;
 
-  // Cabecera y menú
-  const cab = $('#cabecera'), menu = $('#menu'), mb = $('#menuBoton');
+  /* ===== Cabecera y menú ===== */
+  const cab = $('#cabecera'), menu = $('#menu'), mb = $('#menuBoton'), hero = $('.hero');
   const enlaces = $$('.menu a[href^="#"]');
-  const hero = $('.hero');
-  // Sobre la foto del inicio la cabecera es transparente con texto claro
   const alScroll = () => {
     const sobreHero = hero && scrollY < hero.offsetTop + hero.offsetHeight - cab.offsetHeight;
     cab.classList.toggle('sobre-oscuro', !!sobreHero && !menu.classList.contains('abierto'));
@@ -30,14 +33,6 @@
     if (scrollY < 200) enlaces.forEach((a) => a.classList.remove('activo'));
   };
   addEventListener('scroll', alScroll, { passive: true }); alScroll();
-
-  // Paralaje leve de la banda de columnas (solo con movimiento permitido)
-  const banda = $('.banda'), bandaFoto = $('.banda-foto');
-  if (banda && !reducir) addEventListener('scroll', () => requestAnimationFrame(() => {
-    const r = banda.getBoundingClientRect();
-    if (r.bottom < 0 || r.top > innerHeight) return;
-    bandaFoto.style.transform = `translateY(${((r.top + r.height / 2) / innerHeight - .5) * -60}px)`;
-  }), { passive: true });
   const cerrarMenu = () => { menu.classList.remove('abierto'); mb.setAttribute('aria-expanded', 'false'); document.body.classList.remove('sin-scroll'); alScroll(); };
   mb.addEventListener('click', () => {
     document.documentElement.style.setProperty('--top-menu', cab.getBoundingClientRect().bottom + 'px');
@@ -46,61 +41,133 @@
   });
   $$('a', menu).forEach((a) => a.addEventListener('click', cerrarMenu));
   addEventListener('keydown', (e) => { if (e.key === 'Escape') { cerrarMenu(); cerrarCajon(); } });
-
   const obsSec = new IntersectionObserver((ents) => ents.forEach((en) => {
     if (en.isIntersecting) enlaces.forEach((a) => a.classList.toggle('activo', a.getAttribute('href') === '#' + en.target.id));
   }), { rootMargin: '-45% 0px -50% 0px' });
   enlaces.forEach((a) => { const s = $(a.getAttribute('href')); if (s) obsSec.observe(s); });
 
-  // Revelado suave, una sola vez
+  /* ===== Revelado al hacer scroll (una vez). Las fotos usan una cortina que se retira:
+     nunca se recorta el elemento observado, porque entonces el observador no lo ve. ===== */
   const obs = new IntersectionObserver((ents) => ents.forEach((en) => {
     if (en.isIntersecting) { en.target.classList.add('visible'); obs.unobserve(en.target); }
-  }), { threshold: .1 });
-  const observar = (root = document) => $$('.revelar:not(.visible)', root).forEach((el, i) => { el.style.transitionDelay = (i % 4) * 80 + 'ms'; obs.observe(el); });
+  }), { threshold: .12, rootMargin: '0px 0px -6% 0px' });
+  const observar = (root = document) => $$('.revelar:not(.visible), .cortina:not(.visible)', root).forEach((el, i) => { el.style.transitionDelay = (i % 4) * 80 + 'ms'; obs.observe(el); });
 
-  // Fotografías de referencia (Unsplash) mientras llegan las de la firma
-  const foto = (id, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=72`;
-  const fotoArea = { familia: '1562564055-71e051d33c19', laboral: '1551135049-8a33b5883817', civil: '1564846824194-346b7871b855',
-    'seguridad-social': '1758518729912-bf3a84c400e0', tributario: '1520607162513-77705c0f0d4a' };
+  /* ===== Cajón (carrito y artículos) ===== */
+  const cajon = $('#cajon'), velo = $('#velo');
+  let focoPrevio = null;
+  function abrirCajon(html, vista) {
+    if (!cajon.classList.contains('abierto')) focoPrevio = document.activeElement;
+    $('#cajonCuerpo').innerHTML = html; cajon.dataset.vista = vista || '';
+    velo.hidden = false; cajon.classList.add('abierto'); cajon.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('sin-scroll');
+  }
+  function cerrarCajon() {
+    if (!cajon.classList.contains('abierto')) return;
+    cajon.classList.remove('abierto'); cajon.setAttribute('aria-hidden', 'true'); velo.hidden = true;
+    document.body.classList.remove('sin-scroll');
+    if (focoPrevio) focoPrevio.focus();
+  }
+  velo.addEventListener('click', cerrarCajon);
+  $('[data-cerrar]', cajon).addEventListener('click', cerrarCajon);
+  cajon.addEventListener('click', (e) => { if (e.target.closest('[data-cerrar-ir]')) cerrarCajon(); });
 
-  // Inicio: una fila por área que abre la solicitud con el área elegida
-  $('#resolver').innerHTML = L.areas.map((a, i) => `<li><button class="rapido-item" data-solicitar="${a.id}">
-    <span class="n">${String(i + 1).padStart(2, '0')}</span><strong>${esc(a.corto)}</strong><small>${esc(a.temas[0])}</small>${flecha}</button></li>`).join('')
-    + `<li><button class="rapido-item otro" data-solicitar=""><span class="n">—</span><strong>No sé qué área es</strong><small>El equipo lo revisa</small>${flecha}</button></li>`;
-
-  // Áreas: pestañas subrayadas y panel
-  const tabs = $('#areasTabs'), panel = $('#areaPanel');
-  const citaAreas = new Set(); // áreas elegidas para la cita (como un carrito)
-  $('#areasCuenta').textContent = String(L.areas.length).padStart(2, '0');
-  tabs.innerHTML = L.areas.map((a, i) => `<button class="pestana" role="tab" id="tab-${a.id}" aria-controls="areaPanel" aria-selected="${i === 0}" tabindex="${i ? -1 : 0}" data-i="${i}">${esc(a.corto)}</button>`).join('');
-  const mostrarArea = (i) => {
-    const a = L.areas[i];
-    $$('.pestana', tabs).forEach((b, j) => { b.setAttribute('aria-selected', i === j); b.tabIndex = i === j ? 0 : -1; });
-    panel.setAttribute('aria-labelledby', 'tab-' + a.id);
-    panel.innerHTML = `<figure class="area-foto"><img src="${foto(fotoArea[a.id], 1000)}" alt=""><figcaption class="ref">Imagen de referencia</figcaption>
-        <div class="area-foto-texto"><span class="n">${String(i + 1).padStart(2, '0')}</span><h3>${esc(a.nombre)}</h3></div></figure>
-      <div class="area-info"><p class="resumen-area">${esc(a.resumen)}</p><p class="ampliado">${esc(a.ampliado)}</p><p class="eyebrow claro">Asuntos frecuentes</p><ul class="asuntos">${a.temas.map((t) => `<li><button data-solicitar="${a.id}" data-asunto="${esc(t)}">${esc(t)}<span>Consultar →</span></button></li>`).join('')}</ul>
-      <div class="asuntos-pie"><span class="nota-prov">Provisional · se edita desde el panel</span><span class="asuntos-botones"><button class="btn btn-claro btn-sm" data-agregar="${a.id}" aria-pressed="${citaAreas.has(a.id)}">${citaAreas.has(a.id) ? '✓ En su cita' : '+ Añadir a mi cita'}</button><button class="btn btn-oro btn-sm" data-solicitar="${a.id}">Consultar sobre ${esc(a.corto.toLowerCase())}</button></span></div></div>`;
-  };
-  tabs.addEventListener('click', (e) => { const b = e.target.closest('.pestana'); if (b) mostrarArea(+b.dataset.i); });
-  tabs.addEventListener('keydown', (e) => {
-    if (!['ArrowRight', 'ArrowLeft'].includes(e.key)) return;
-    e.preventDefault();
-    const bs = $$('.pestana', tabs), i = bs.indexOf(document.activeElement);
-    const n = (i + (e.key === 'ArrowRight' ? 1 : -1) + bs.length) % bs.length;
-    bs[n].focus(); mostrarArea(n);
+  /* ===== Carrito de servicios ===== */
+  const CLAVE = 'litigar-carrito';
+  let carrito = [];
+  try { carrito = JSON.parse(localStorage.getItem(CLAVE)) || []; } catch (e) {}
+  carrito = Array.isArray(carrito) ? carrito.filter((x) => x && L.areas.some((a) => a.id === x.area) && typeof x.tema === 'string') : [];
+  const llave = (area, tema) => `${area}::${tema}`;
+  const enCarrito = (area, tema) => carrito.some((x) => x.area === area && x.tema === tema);
+  const nombreArea = (id) => (L.areas.find((a) => a.id === id) || {}).corto || id;
+  const aviso = document.createElement('div'); aviso.className = 'aviso-flot'; aviso.setAttribute('role', 'status'); document.body.appendChild(aviso);
+  function avisar(html) { aviso.innerHTML = html; aviso.classList.add('ver'); clearTimeout(aviso.t); aviso.t = setTimeout(() => aviso.classList.remove('ver'), 3400); }
+  const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(carrito)); } catch (e) {} };
+  function alternar(area, tema) {
+    const estaba = enCarrito(area, tema);
+    carrito = estaba ? carrito.filter((x) => !(x.area === area && x.tema === tema)) : [...carrito, { area, tema }];
+    guardar(); pintarCarrito();
+    if (!estaba) {
+      avisar(`<strong>${esc(tema)}</strong> se añadió a su solicitud <a href="#cita">Solicitar →</a>`);
+      const b = $('#carritoBtn'); b.classList.remove('salto'); void b.offsetWidth; b.classList.add('salto');
+    } else avisar(`${esc(tema)} se quitó de su solicitud`);
+  }
+  const itemHtml = (x, txt) => `<li><span><small>${esc(nombreArea(x.area))}</small>${esc(x.tema)}</span><button type="button" data-quitar="${esc(llave(x.area, x.tema))}" aria-label="Quitar ${esc(x.tema)}">${txt}</button></li>`;
+  function pintarCarrito() {
+    const n = carrito.length, cu = $('#ctaCuenta');
+    cu.hidden = !n; cu.textContent = n;
+    $('#carritoBtn').setAttribute('aria-label', n ? `Ver mi solicitud: ${n} servicio${n === 1 ? '' : 's'}` : 'Ver mi solicitud');
+    $$('[data-servicio]').forEach((b) => {
+      const [a, t] = b.dataset.servicio.split('::'), si = enCarrito(a, t);
+      b.setAttribute('aria-pressed', si); const m = b.querySelector('.mas'); if (m) m.textContent = si ? '✓' : '+';
+    });
+    const lista = $('#citaServicios');
+    if (lista) {
+      lista.innerHTML = carrito.map((x) => itemHtml(x, '×')).join('');
+      $('#citaVacio').hidden = n > 0;
+      $('#citaCuenta').textContent = n || '';
+    }
+    if (cajon.classList.contains('abierto') && cajon.dataset.vista === 'carrito') abrirCarrito(true);
+  }
+  function abrirCarrito(refrescar) {
+    const n = carrito.length;
+    abrirCajon(`<p class="eyebrow">Mi solicitud</p><h2 id="cajonTitulo">${n ? `${n} servicio${n === 1 ? '' : 's'} de interés` : 'Aún no ha añadido servicios'}</h2>
+      ${n ? `<ul class="carrito-lista">${carrito.map((x) => itemHtml(x, 'Quitar')).join('')}</ul>`
+        : '<p class="ayuda">Abra un área en la sección de servicios y pulse <strong>+</strong> en lo que necesite. También puede pedir la cita y contarnos su caso en el mensaje.</p>'}
+      <div class="carrito-acciones"><a href="#cita" class="btn btn-oro" data-cerrar-ir>Pedir cita o cotización ${flecha}</a><a href="#areas" class="btn btn-linea" data-cerrar-ir>Seguir viendo servicios</a></div>`, 'carrito');
+    if (!refrescar) setTimeout(() => $('.cerrar', cajon).focus(), 50);
+  }
+  $('#carritoBtn').addEventListener('click', () => abrirCarrito());
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-servicio]');
+    if (b) { const [a, t] = b.dataset.servicio.split('::'); alternar(a, t); return; }
+    const q = e.target.closest('[data-quitar]');
+    if (q) { const [a, t] = q.dataset.quitar.split('::'); alternar(a, t); }
   });
-  mostrarArea(0);
 
-  // Pasos
-  $('#pasos').innerHTML = L.pasos.map((p) => `<li><h3>${esc(p.t)}</h3><p>${esc(p.d)}</p></li>`).join('');
+  /* ===== Servicios: galería que se expande ===== */
+  const gal = $('#galeria');
+  $('#areasCuenta').textContent = String(L.areas.length).padStart(2, '0');
+  const servicioBtn = (area, tema, etiqueta, extra = '') => `<li><button type="button" class="servicio${extra}" data-servicio="${esc(llave(area, tema))}" aria-pressed="false"><span>${esc(etiqueta)}</span><span class="mas" aria-hidden="true">+</span></button></li>`;
+  gal.innerHTML = L.areas.map((a, i) => `<article class="panel${i === 0 ? ' activo' : ''}" data-i="${i}">
+      <img src="${foto(fotoArea[a.id], 1100)}" alt="" loading="lazy">
+      <button type="button" class="panel-tira" aria-expanded="${i === 0}" aria-controls="pc-${a.id}"><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${esc(a.corto)}</span></button>
+      <div class="panel-contenido" id="pc-${a.id}">
+        <p class="n">${String(i + 1).padStart(2, '0')} · ${esc(a.nombre)}</p>
+        <h3>${esc(a.resumen)}</h3>
+        <ul class="servicios-lista">${a.temas.map((t) => servicioBtn(a.id, t, t)).join('')}${servicioBtn(a.id, 'Asesoría general en ' + a.corto.toLowerCase(), 'Otro asunto de ' + a.corto.toLowerCase(), ' general')}</ul>
+      </div>
+      <span class="ref">Imagen de referencia</span>
+    </article>`).join('');
+  const abrirPanel = (i) => $$('.panel', gal).forEach((p, j) => { p.classList.toggle('activo', i === j); $('.panel-tira', p).setAttribute('aria-expanded', i === j); });
+  gal.addEventListener('click', (e) => { const t = e.target.closest('.panel-tira'); if (t) abrirPanel(+t.closest('.panel').dataset.i); });
+  if (puntero) gal.addEventListener('pointerover', (e) => { const p = e.target.closest('.panel'); if (p && !p.classList.contains('activo')) abrirPanel(+p.dataset.i); });
 
-  // Equipo: filas; sin datos confirmados no se muestran fotos ni siluetas
-  // Equipo: espacios reservados; aquí nunca se usan fotos de stock
-  $('#equipoLista').innerHTML = L.equipo.map((m) => `<li class="miembro revelar"><div class="miembro-foto"><span>Espacio para<br>foto oficial</span></div>
+  /* ===== Firma: palabras en movimiento ===== */
+  const pal = L.areas.map((a) => `<span>${esc(a.corto)}</span><i>✦</i>`).join('');
+  $('#palabras').innerHTML = pal + pal + pal;
+
+  /* ===== Cómo trabajamos: relato con scroll ===== */
+  const fotosPaso = ['1758519288550-1975537cff9a', '1564846824194-346b7871b855', '1551135049-8a33b5883817'];
+  $('#procesoFotos').innerHTML = L.pasos.map((p, i) => `<figure class="${i === 0 ? 'activa' : ''}"><img src="${foto(fotosPaso[i % fotosPaso.length], 1000)}" alt="" loading="lazy"></figure>`).join('') + '<span class="ref">Imagen de referencia</span>';
+  $('#pasos').innerHTML = L.pasos.map((p, i) => `<li class="paso${i === 0 ? ' activo' : ''}" data-i="${i}"><span class="paso-n">${String(i + 1).padStart(2, '0')}</span><div><h3>${esc(p.t)}</h3><p>${esc(p.d)}</p></div></li>`).join('');
+  const pasosEl = $$('.paso'), fotosEl = $$('#procesoFotos figure');
+  const activarPaso = (i) => {
+    pasosEl.forEach((p, j) => p.classList.toggle('activo', j === i));
+    fotosEl.forEach((f, j) => f.classList.toggle('activa', j === i));
+    $('#procesoNum').textContent = String(i + 1).padStart(2, '0');
+  };
+  const obsPaso = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) activarPaso(+en.target.dataset.i); }), { rootMargin: '-45% 0px -45% 0px' });
+  pasosEl.forEach((p) => { obsPaso.observe(p); p.addEventListener('mouseenter', () => activarPaso(+p.dataset.i)); });
+
+  /* ===== Equipo: espacios reservados (aquí nunca se usan fotos de stock) ===== */
+  $('#equipoLista').innerHTML = L.equipo.map((m, i) => `<li class="miembro revelar"><div class="miembro-foto" data-inclinar>
+      <span class="esquinas" aria-hidden="true"></span><span class="barrido" aria-hidden="true"></span>
+      <span class="miembro-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+      <span class="miembro-pend">Foto oficial<br>próximamente</span></div>
     <p class="cargo">${esc(m.cargo)}</p><h3>${esc(m.nombre)}</h3><p class="esp">${esc(m.especialidad)}</p></li>`).join('');
 
-  // Artículos
+  /* ===== Artículos ===== */
   const cats = ['Todos', ...new Set(L.articulos.map((a) => a.cat))];
   const filtros = $('#filtros');
   filtros.innerHTML = cats.map((x, i) => `<button class="pestana" aria-pressed="${i === 0}" data-cat="${esc(x)}">${esc(x)}</button>`).join('');
@@ -116,8 +183,18 @@
     articulos(b.dataset.cat);
   });
   articulos('Todos');
+  $('#articulos').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-art]'); if (!b) return;
+    const art = L.articulos.find((x) => x.titulo === b.dataset.art);
+    const area = L.areas.find((x) => x.corto.toLowerCase().startsWith(art.cat.toLowerCase().slice(0, 5)));
+    abrirCajon(`<p class="eyebrow">${esc(art.cat)} · ${fecha(art.fecha)} · ${art.min} min</p><h2 id="cajonTitulo">${esc(art.titulo)}</h2><p>${esc(art.resumen)}</p>
+      <p class="ayuda">El artículo completo lo publicará la firma desde el panel. Este texto es provisional.</p>
+      ${area ? `<button type="button" class="btn btn-tinta" data-servicio="${esc(llave(area.id, 'Asesoría general en ' + area.corto.toLowerCase()))}"><span class="mas" aria-hidden="true">+</span> Añadir asesoría en ${esc(area.corto.toLowerCase())}</button>` : ''}`, 'articulo');
+    pintarCarrito();
+    setTimeout(() => $('.cerrar', cajon).focus(), 50);
+  });
 
-  // Contacto y FAQs
+  /* ===== Contacto, preguntas y pie ===== */
   const canal = (label, valor, href, ext) => `<li><a href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}><small>${label}</small><strong>${esc(valor)}</strong></a></li>`;
   const pendiente = (label) => `<li><div class="pend"><small>${label}</small><strong>Por confirmar</strong></div></li>`;
   $('#canales').innerHTML = canal('WhatsApp', 'Escribir ahora', c.whatsapp, true)
@@ -126,38 +203,12 @@
     + canal('Instagram', '@litigar.abogados', c.instagram, true)
     + pendiente('Dirección') + pendiente('Horario');
   $('#faqs').innerHTML = L.faqs.map((f) => `<details><summary>${esc(f.p)}</summary><p>${esc(f.r)}</p></details>`).join('');
-  $('#pieAreas').innerHTML = L.areas.map((a) => `<li><button class="enlace" data-solicitar="${a.id}">${esc(a.corto)}</button></li>`).join('');
+  $('#pieAreas').innerHTML = L.areas.map((a, i) => `<li><a href="#areas" data-abrir-area="${i}">${esc(a.corto)}</a></li>`).join('');
   $('#pieContacto').innerHTML = c.telefonos.map((t) => `<li><a href="tel:+57${t.replace(/\s/g, '')}">${t}</a></li>`).join('')
     + `<li><a href="mailto:${c.correo}">${c.correo}</a></li><li><a href="${c.instagram}" target="_blank" rel="noopener">Instagram</a></li>`;
+  document.addEventListener('click', (e) => { const a = e.target.closest('[data-abrir-area]'); if (a) abrirPanel(+a.dataset.abrirArea); });
 
-  // Cajón (artículos) y ventanas legales
-  const cajon = $('#cajon'), velo = $('#velo');
-  let focoPrevio = null;
-  function abrirCajon(html) {
-    focoPrevio = document.activeElement;
-    $('#cajonCuerpo').innerHTML = html;
-    velo.hidden = false; cajon.classList.add('abierto'); cajon.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('sin-scroll');
-    setTimeout(() => $('.cerrar', cajon).focus(), 50);
-  }
-  function cerrarCajon() {
-    if (!cajon.classList.contains('abierto')) return;
-    cajon.classList.remove('abierto'); cajon.setAttribute('aria-hidden', 'true'); velo.hidden = true;
-    document.body.classList.remove('sin-scroll');
-    if (focoPrevio) focoPrevio.focus();
-  }
-  velo.addEventListener('click', cerrarCajon);
-  $('[data-cerrar]', cajon).addEventListener('click', cerrarCajon);
-
-  $('#articulos').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-art]'); if (!b) return;
-    const art = L.articulos.find((x) => x.titulo === b.dataset.art);
-    const area = L.areas.find((x) => x.corto.toLowerCase().startsWith(art.cat.toLowerCase().slice(0, 5)));
-    abrirCajon(`<p class="eyebrow">${esc(art.cat)} · ${fecha(art.fecha)} · ${art.min} min</p><h2 id="cajonTitulo">${esc(art.titulo)}</h2><p>${esc(art.resumen)}</p>
-      <p class="ayuda">El artículo completo lo publicará la firma desde el panel. Este texto es provisional.</p>
-      <button class="btn btn-tinta" data-solicitar="${area ? area.id : ''}">Tengo una situación parecida</button>`);
-  });
-
+  /* ===== Ventanas legales ===== */
   const modal = $('#modal');
   const legales = {
     privacidad: `<h2>Política de privacidad</h2><p class="nota-prov">Documento pendiente</p>
@@ -166,177 +217,35 @@
       <p>Texto provisional. Al enviar una solicitud, usted autoriza a Litigar Group S.A.S. a tratar sus datos personales para atender su solicitud y contactarle. Puede conocer, actualizar, rectificar y suprimir sus datos, y revocar la autorización, escribiendo a ${c.correo}.</p>
       <p>La política definitiva (responsable, finalidades, derechos del titular y procedimiento de consultas y reclamos) la redactará y aprobará la firma.</p>`,
   };
-  function abrirModal(k) { $('#modalCuerpo').innerHTML = legales[k]; modal.showModal(); }
   $('[data-cerrar]', modal).addEventListener('click', () => modal.close());
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });
+  document.addEventListener('click', (e) => { const m = e.target.closest('[data-modal]'); if (m) { $('#modalCuerpo').innerHTML = legales[m.dataset.modal]; modal.showModal(); } });
 
-  document.addEventListener('click', (e) => {
-    const sol = e.target.closest('[data-solicitar]');
-    if (sol) { cerrarCajon(); iniciarConArea(sol.dataset.solicitar, sol.dataset.asunto); }
-    const mod = e.target.closest('[data-modal]');
-    if (mod) abrirModal(mod.dataset.modal);
-  });
-
-  /* ===== Asistente de solicitud ===== */
-  const A = L.asistente;
-  const est = {};
-  const vistas = [
-    { k: 'situacion', r: 'Situación', t: '¿Qué tipo de situación enfrenta?', a: 'Elija la opción que más se parezca. No necesita términos jurídicos.', ops: A.situaciones.map((s) => [s.id, s.t]) },
-    { k: 'area', r: 'Área', t: '¿En qué área cree que necesita ayuda?', a: 'Si no está seguro, elija "No lo sé". El equipo lo revisará.', ops: [...L.areas.map((a) => [a.id, a.nombre]), ['otra', 'Otra área'], ['nose', 'No lo sé']], dos: true },
-    { k: 'tipo', r: 'Para', t: '¿La solicitud es para una persona o para una empresa?', ops: [['natural', 'Persona natural', 'Para mí o para un familiar'], ['empresa', 'Empresa', 'Para una organización o negocio']] },
-    { k: 'ciudad', r: 'Ciudad', t: '¿En qué ciudad se encuentra?', a: 'Nos ayuda a saber si podemos atenderle de forma presencial o virtual.', campo: 'ciudad' },
-    { k: 'proceso', r: 'Proceso en curso', t: '¿Existe un proceso judicial en curso?', a: 'Por ejemplo, una demanda, una denuncia o una audiencia programada.', ops: A.procesos.map((p) => [p.id, p.t]) },
-    { k: 'urgencia', r: 'Urgencia', t: '¿Qué tan urgente es su situación?', ops: A.urgencias.map((u) => [u.id, u.t, u.d]) },
-    { k: 'descripcion', r: 'Descripción', t: 'Describa brevemente su situación', a: 'Qué pasó, cuándo y qué le gustaría lograr. No incluya contraseñas, números de cuenta ni datos de terceros que no sean necesarios.', campo: 'descripcion' },
-    { k: 'contacto', r: 'Contacto', t: '¿Cómo podemos contactarle?', a: 'Solo usaremos estos datos para responder a su solicitud.', campo: 'contacto' },
-  ];
-  let vi = 0;
-  const cuerpo = $('#asistenteCuerpo'), btnAtras = $('#btnAtras'), btnSig = $('#btnSiguiente');
-
-  // Resumen "Tu consulta": muestra lo respondido, como un carrito
-  const etiqueta = (v) => {
-    if (v.ops) { const o = v.ops.find(([id]) => id === est[v.k]); return o ? o[1] : ''; }
-    if (v.k === 'descripcion') return est.descripcion ? `${est.descripcion.length} caracteres` : '';
-    if (v.k === 'contacto') return est.nombre || '';
-    return est[v.k] || '';
-  };
-  function resumen() {
-    let n = 0;
-    $('#resumenLista').innerHTML = vistas.map((v) => { const t = etiqueta(v); if (t) n++; return `<div><dt>${v.r}</dt><dd class="${t ? '' : 'vacio-dd'}">${esc(t || '—')}</dd></div>`; }).join('')
-      + (est.asunto ? `<div><dt>Asunto</dt><dd>${esc(est.asunto)}</dd></div>` : '');
-    $('#resumenCuenta').textContent = `${n} de ${vistas.length}`;
-  }
-  const rb = $('#resumenBoton');
-  rb.addEventListener('click', () => { const a = $('#resumen').classList.toggle('abierto'); rb.setAttribute('aria-expanded', a); });
-
-  function pintar() {
-    const v = vistas[vi];
-    $('#pasoTexto').textContent = `Paso ${vi + 1} de ${vistas.length}`;
-    $('#pasoBarra').style.width = ((vi + 1) / vistas.length) * 100 + '%';
-    btnAtras.style.visibility = vi ? 'visible' : 'hidden';
-    btnSig.textContent = vi === vistas.length - 1 ? 'Enviar solicitud' : 'Continuar';
-    let html = `<div class="vista"><h3 id="vt" tabindex="-1">${esc(v.t)}</h3>${v.a ? `<p class="ayuda">${esc(v.a)}</p>` : ''}`;
-    if (vi === 0 && est.area) { const a = L.areas.find((x) => x.id === est.area); if (a) html += `<p class="area-elegida"><strong>Área elegida:</strong> ${esc(a.nombre)}${est.asunto ? ` · ${esc(est.asunto)}` : ''}</p>`; }
-    if (v.ops) html += `<div class="opciones ${v.dos ? 'dos' : ''}" role="radiogroup" aria-labelledby="vt">${v.ops.map(([id, t, d]) =>
-      `<div class="opcion"><input type="radio" name="${v.k}" id="o-${v.k}-${id}" value="${id}" ${est[v.k] === id ? 'checked' : ''}><label for="o-${v.k}-${id}">${esc(t)}${d ? `<small>${esc(d)}</small>` : ''}</label></div>`).join('')}</div>`;
-    if (v.campo === 'ciudad') html += `<div class="campo"><label for="f-ciudad">Ciudad o municipio</label><input id="f-ciudad" maxlength="80" autocomplete="address-level2" value="${esc(est.ciudad || '')}"></div>`;
-    if (v.campo === 'descripcion') html += `<div class="campo"><label for="f-desc">Su situación</label><textarea id="f-desc" maxlength="2000">${esc(est.descripcion || (est.asunto ? `Asunto: ${est.asunto}. ` : ''))}</textarea><span class="contador" id="contador">0 / 2000</span></div>`;
-    if (v.campo === 'contacto') html += `<div class="campo"><label for="f-nombre">Nombre completo</label><input id="f-nombre" maxlength="120" autocomplete="name" value="${esc(est.nombre || '')}"></div>
-      <div class="campos-dos"><div class="campo"><label for="f-tel">Teléfono o WhatsApp</label><input id="f-tel" type="tel" maxlength="20" autocomplete="tel" value="${esc(est.telefono || '')}"></div>
-      <div class="campo"><label for="f-correo">Correo electrónico</label><input id="f-correo" type="email" maxlength="120" autocomplete="email" value="${esc(est.correo || '')}"></div></div>
-      <label class="consentimiento"><input type="checkbox" id="f-consent" ${est.consentimiento ? 'checked' : ''}><span>Autorizo a Litigar Group S.A.S. a tratar mis datos personales para atender esta solicitud, según la <button type="button" data-modal="datos">política de tratamiento de datos</button>. Entiendo que enviarla no constituye asesoría jurídica ni la aceptación del caso.</span></label>`;
-    html += '<p class="error" id="error" role="alert"></p></div>';
-    cuerpo.innerHTML = html;
-    const ta = $('#f-desc');
-    if (ta) { const act = () => ($('#contador').textContent = `${ta.value.length} / 2000`); ta.addEventListener('input', act); act(); }
-    $$('input[type=radio]', cuerpo).forEach((r) => r.addEventListener('change', () => { est[v.k] = r.value; resumen(); setTimeout(() => { if (vistas[vi].k === v.k) avanzar(); }, 260); }));
-    resumen();
-  }
-
-  function leer() {
-    const v = vistas[vi], err = $('#error');
-    const falla = (m) => { err.textContent = m; return false; };
-    if (v.ops && !est[v.k]) return falla('Elija una opción para continuar.');
-    if (v.campo === 'ciudad') { est.ciudad = $('#f-ciudad').value.trim(); if (est.ciudad.length < 2) return falla('Escriba su ciudad.'); }
-    if (v.campo === 'descripcion') { est.descripcion = $('#f-desc').value.trim(); if (est.descripcion.length < 20) return falla('Cuéntenos un poco más (mínimo 20 caracteres).'); }
-    if (v.campo === 'contacto') {
-      est.nombre = $('#f-nombre').value.trim(); est.telefono = $('#f-tel').value.trim(); est.correo = $('#f-correo').value.trim(); est.consentimiento = $('#f-consent').checked;
-      if (est.nombre.length < 3) return falla('Escriba su nombre.');
-      if (!est.telefono && !est.correo) return falla('Deje al menos un teléfono o un correo.');
-      if (est.telefono && !/^[+\d\s()-]{7,20}$/.test(est.telefono)) return falla('Revise el número de teléfono.');
-      if (est.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(est.correo)) return falla('Revise el correo electrónico.');
-      if (!est.consentimiento) return falla('Debe autorizar el tratamiento de datos para enviar la solicitud.');
-    }
-    return true;
-  }
-
-  function avanzar() {
-    if (!leer()) return;
-    resumen();
-    if (vi < vistas.length - 1) {
-      vi++;
-      // Si el área ya viene elegida desde el sitio, se salta esa pregunta
-      if (vistas[vi].k === 'area' && est.area && est.areaPrevia) vi++;
-      pintar(); $('#vt').focus({ preventScroll: true }); return;
-    }
-    enviar();
-  }
-  btnSig.addEventListener('click', avanzar);
-  btnAtras.addEventListener('click', () => { if (vi) { vi--; pintar(); } });
-  $('#asistente').addEventListener('submit', (e) => { e.preventDefault(); avanzar(); });
-
-  async function enviar() {
-    btnSig.disabled = true; btnSig.textContent = 'Enviando…';
-    const datos = { situacion: est.situacion, area: est.area, tipo: est.tipo, ciudad: est.ciudad, proceso: est.proceso, urgencia: est.urgencia,
-      descripcion: est.descripcion, nombre: est.nombre, telefono: est.telefono, correo: est.correo, consentimiento: true };
-    let codigo = null, real = false;
-    try {
-      if (C.supabaseUrl && C.supabaseKey) {
-        // Producción: la función crear_solicitud valida, clasifica y guarda en el servidor.
-        const r = await fetch(`${C.supabaseUrl}/rest/v1/rpc/crear_solicitud`, {
-          method: 'POST', headers: { apikey: C.supabaseKey, Authorization: `Bearer ${C.supabaseKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ p: Object.assign({}, datos, { politica_version: C.politicaVersion || 'provisional-2026-11' }) }),
-        });
-        if (!r.ok) throw new Error(await r.text());
-        codigo = await r.json(); real = true;
-      } else {
-        const s = L.crearSolicitud(datos);
-        if (!s) throw new Error('No se pudo guardar en este navegador');
-        codigo = s.id;
-      }
-    } catch (e) {
-      btnSig.disabled = false; btnSig.textContent = 'Enviar solicitud';
-      $('#error').innerHTML = 'No pudimos enviar su solicitud. Intente de nuevo o <a href="' + c.whatsapp + '" target="_blank" rel="noopener">escríbanos por WhatsApp</a>.';
-      return;
-    }
-    $('.asistente-pie').hidden = true;
-    $('#pasoTexto').textContent = 'Solicitud enviada'; $('#pasoBarra').style.width = '100%';
-    cuerpo.innerHTML = `<div class="vista exito"><h3 tabindex="-1" id="vt">Recibimos su solicitud</h3>
-      <p class="ayuda">Su código de seguimiento es</p><div class="codigo">${esc(codigo)}</div>
-      <p class="ayuda">El equipo revisará la información y, si su caso corresponde a nuestros servicios, le contactará por el medio que indicó. Recibir la solicitud no implica la aceptación del caso.</p>
-      ${real ? '' : `<p class="aviso-demo"><strong>Vista previa:</strong> esta solicitud se guardó solo en este navegador para la demostración. No se envió a la firma ni se envió ningún correo. Puede verla en el <a href="admin/">panel de demostración</a>.</p>`}
-      <button type="button" class="btn btn-texto" id="otra">Enviar otra solicitud</button></div>`;
-    $('#vt').focus({ preventScroll: true });
-    $('#otra').addEventListener('click', () => { Object.keys(est).forEach((k) => delete est[k]); vi = 0; $('.asistente-pie').hidden = false; btnSig.disabled = false; pintar(); });
-  }
-
-  function iniciarConArea(id, asunto) {
-    if (id) { est.area = id; est.areaPrevia = true; } else { delete est.area; delete est.areaPrevia; }
-    if (asunto) est.asunto = asunto; else delete est.asunto;
-    vi = 0; $('.asistente-pie').hidden = false; btnSig.disabled = false; pintar();
-    $('#solicitud').scrollIntoView({ behavior: reducir ? 'auto' : 'smooth' });
-  }
-
-  /* ===== Formulario de cita ===== */
-  const cf = $('#citaForm'), chips = $('#citaAreas'), cErr = $('#citaError');
-  const pintarChips = () => {
-    chips.innerHTML = L.areas.map((a) => `<button type="button" class="chip-area" data-chip="${a.id}" aria-pressed="${citaAreas.has(a.id)}">${citaAreas.has(a.id) ? '✓ ' : '+ '}${esc(a.corto)}</button>`).join('');
-    $('#citaVacio').hidden = citaAreas.size > 0;
-    const n = $('#ctaCuenta'); n.hidden = !citaAreas.size; n.textContent = citaAreas.size;
-    $$('[data-agregar]').forEach((b) => { const si = citaAreas.has(b.dataset.agregar); b.setAttribute('aria-pressed', si); b.textContent = si ? '✓ En su cita' : '+ Añadir a mi cita'; });
-  };
-  const alternarArea = (id) => { if (citaAreas.has(id)) citaAreas.delete(id); else citaAreas.add(id); pintarChips(); };
-  chips.addEventListener('click', (e) => { const b = e.target.closest('[data-chip]'); if (b) { alternarArea(b.dataset.chip); $(`[data-chip="${b.dataset.chip}"]`, chips).focus(); } });
-  // Aviso breve al añadir un área desde la sección de áreas
-  const aviso = document.createElement('div'); aviso.className = 'aviso-flot'; aviso.setAttribute('role', 'status'); document.body.appendChild(aviso);
-  document.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-agregar]'); if (!b) return;
-    const id = b.dataset.agregar, a = L.areas.find((x) => x.id === id);
-    alternarArea(id);
-    aviso.innerHTML = citaAreas.has(id) ? `${esc(a.corto)} se añadió a su cita · <a href="#cita">Ir al formulario →</a>` : `${esc(a.corto)} se quitó de su cita`;
-    aviso.classList.add('ver'); clearTimeout(aviso.t); aviso.t = setTimeout(() => aviso.classList.remove('ver'), 3200);
-  });
+  /* ===== Formulario único: cita o cotización ===== */
+  const cf = $('#citaForm'), cErr = $('#citaError');
   const hoy = new Date();
   const iso = (d) => new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  const limitesFecha = () => { $('#c-fecha').min = iso(hoy); $('#c-fecha').max = iso(new Date(hoy.getTime() + 120 * 864e5)); };
-  limitesFecha(); pintarChips();
+  const limitesFecha = () => { const f = $('#c-fecha'); f.min = iso(hoy); f.max = iso(new Date(hoy.getTime() + 120 * 864e5)); };
+  const tipoActual = () => ($('input[name=tipo]:checked', cf) || {}).value || 'cita';
+  const pintarTipo = () => {
+    const cot = tipoActual() === 'cotizacion';
+    $('#soloCita').hidden = cot; cf.classList.toggle('es-cotizacion', cot);
+    $('#citaBoton').textContent = cot ? 'Pedir cotización' : 'Solicitar cita';
+    $('#citaNota').textContent = cot ? 'Los campos con * son obligatorios. Le enviaremos la cotización por el medio que indique.'
+      : 'Los campos con * son obligatorios. La fecha es una preferencia; la cita queda confirmada cuando el equipo le contacte.';
+  };
+  cf.addEventListener('change', (e) => { if (e.target.name === 'tipo') pintarTipo(); });
+  limitesFecha(); pintarTipo();
 
   cf.addEventListener('submit', async (e) => {
     e.preventDefault(); cErr.textContent = '';
     $$('.campo.mal', cf).forEach((x) => x.classList.remove('mal'));
     const v = (id) => $('#' + id).value.trim();
-    const d = { nombre: v('c-nombre'), apellido: v('c-apellido'), correo: v('c-correo'), telefono: v('c-tel'), areas: [...citaAreas],
-      modalidad: ($('input[name=modalidad]:checked', cf) || {}).value, fecha_preferida: v('c-fecha'), franja: $('#c-franja').value,
+    const tipo = tipoActual(), cita = tipo === 'cita';
+    const d = { tipo, nombre: v('c-nombre'), apellido: v('c-apellido'), correo: v('c-correo'), telefono: v('c-tel'),
+      areas: [...new Set(carrito.map((x) => x.area))], servicios: carrito.map((x) => `${nombreArea(x.area)} · ${x.tema}`),
+      modalidad: cita ? ($('input[name=modalidad]:checked', cf) || {}).value : null,
+      fecha_preferida: cita ? v('c-fecha') : '', franja: cita ? $('#c-franja').value : '',
       mensaje: v('c-mensaje'), consentimiento: $('#c-consent').checked, web: v('c-web') };
     const falla = (id, m) => { if (id) { $('#' + id).closest('.campo').classList.add('mal'); $('#' + id).focus(); } cErr.textContent = m; };
     if (d.nombre.length < 2) return falla('c-nombre', 'Escriba su nombre.');
@@ -344,13 +253,14 @@
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correo)) return falla('c-correo', 'Revise el correo electrónico.');
     if (!/^[+\d\s()-]{7,20}$/.test(d.telefono)) return falla('c-tel', 'Revise el número de teléfono.');
     if (d.fecha_preferida && (d.fecha_preferida < $('#c-fecha').min || d.fecha_preferida > $('#c-fecha').max)) return falla('c-fecha', 'Elija una fecha entre hoy y los próximos cuatro meses.');
+    if (!cita && !d.servicios.length && d.mensaje.length < 10) return falla('c-mensaje', 'Para cotizar, añada al menos un servicio o cuéntenos qué necesita en el mensaje.');
     if (!d.consentimiento) return falla(null, 'Debe autorizar el tratamiento de datos para enviar la solicitud.');
     if (d.web) return; // campo trampa: lo llenó un bot
-    const btn = $('.btn-enviar', cf); btn.disabled = true; btn.classList.add('cargando'); btn.firstChild.textContent = 'Enviando… ';
+    const btn = $('.btn-enviar', cf), txt = $('#citaBoton'); btn.disabled = true; btn.classList.add('cargando'); txt.textContent = 'Enviando…';
     let codigo, real = false;
     try {
       if (C.supabaseUrl && C.supabaseKey) {
-        // La función solicitar_cita valida y guarda en el servidor; el público no puede leer la tabla.
+        // solicitar_cita valida y guarda en el servidor; el público no puede leer la tabla.
         const r = await fetch(`${C.supabaseUrl}/rest/v1/rpc/solicitar_cita`, {
           method: 'POST', headers: { apikey: C.supabaseKey, Authorization: `Bearer ${C.supabaseKey}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ p: Object.assign({}, d, { politica_version: C.politicaVersion || 'provisional-2026-11' }) }),
@@ -364,24 +274,39 @@
         db.citas.unshift(Object.assign({ id: codigo, estado: 'pendiente', creada: new Date().toISOString(), notas: '' }, d)); L.store.guardar(db);
       }
     } catch (err) {
-      btn.disabled = false; btn.classList.remove('cargando'); btn.firstChild.textContent = 'Enviar solicitud ';
-      cErr.innerHTML = `No pudimos enviar su solicitud${/Demasiadas|fecha|autoriz/.test(err.message) ? ': ' + esc(err.message) : ''}. Intente de nuevo o <a href="${c.whatsapp}" target="_blank" rel="noopener">escríbanos por WhatsApp</a>.`;
+      btn.disabled = false; btn.classList.remove('cargando'); pintarTipo();
+      cErr.innerHTML = `No pudimos enviar su solicitud${/Demasiadas|fecha|autoriz|servicio/.test(err.message) ? ': ' + esc(err.message) : ''}. Intente de nuevo o <a href="${c.whatsapp}" target="_blank" rel="noopener">escríbanos por WhatsApp</a>.`;
       return;
     }
-    const cuerpoCita = $('#citaCuerpo'), previo = cuerpoCita.innerHTML;
-    cuerpoCita.innerHTML = `<div class="cita-exito"><svg class="check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>
+    const cuerpo = $('#citaCuerpo'), previo = cuerpo.innerHTML;
+    cuerpo.innerHTML = `<div class="cita-exito"><svg class="check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>
       <h3 tabindex="-1" id="citaOk">Recibimos su solicitud, ${esc(d.nombre)}</h3><p>Su código de seguimiento es</p><div class="codigo">${esc(codigo)}</div>
-      <p>Una persona del equipo le contactará para confirmar el día y la hora. Hasta entonces la cita no está confirmada.</p>
+      <p>${cita ? 'Una persona del equipo le contactará para confirmar el día y la hora. Hasta entonces la cita no está confirmada.' : 'El equipo revisará lo que necesita y le enviará la cotización por el medio que indicó.'}</p>
       ${real ? '' : '<p class="aviso-demo"><strong>Vista previa:</strong> se guardó solo en este navegador; no se envió a la firma.</p>'}
       <button type="button" class="btn btn-linea btn-sm" id="citaOtra">Enviar otra solicitud</button></div>`;
     $('#citaOk').focus({ preventScroll: true });
-    $('#citaOtra').addEventListener('click', () => { cuerpoCita.innerHTML = previo; citaAreas.clear(); cf.reset(); limitesFecha(); pintarChips(); });
+    carrito = []; try { localStorage.removeItem(CLAVE); } catch (e2) {}
+    $('#citaOtra').addEventListener('click', () => { cuerpo.innerHTML = previo; cf.reset(); limitesFecha(); pintarTipo(); pintarCarrito(); });
+    pintarCarrito();
   });
 
   /* ===== Movimiento ===== */
-  // Barra de progreso de lectura
   const prog = $('#progreso');
-  addEventListener('scroll', () => { prog.style.transform = `scaleX(${scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight)})`; }, { passive: true });
+  const enVista = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; };
+  const paralaje = $$('[data-vel]'), eco = $('[data-eco]'), palabras = $('#palabras'), heroImg = $('.hero-foto img');
+  let pedido = false;
+  function cuadro() {
+    pedido = false;
+    prog.style.transform = `scaleX(${scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight)})`;
+    if (reducir) return;
+    if (heroImg && scrollY < innerHeight) heroImg.style.translate = `0 ${scrollY * .25}px`;
+    paralaje.forEach((el) => { if (!enVista(el)) return; const r = el.getBoundingClientRect(); el.style.translate = `0 ${(r.top + r.height / 2 - innerHeight / 2) * +el.dataset.vel}px`; });
+    if (enVista(palabras)) palabras.style.transform = `translateX(${-((scrollY * .35) % (palabras.scrollWidth / 3))}px)`;
+    if (enVista(eco)) eco.style.translate = `${eco.parentElement.getBoundingClientRect().top * .3}px 0`;
+  }
+  addEventListener('scroll', () => { if (!pedido) { pedido = true; requestAnimationFrame(cuadro); } }, { passive: true });
+  cuadro();
+
   if (!reducir) {
     // Titulares que suben palabra por palabra
     $$('h2.revelar').forEach((h) => {
@@ -394,24 +319,28 @@
       if (!en.isIntersecting) return; obsCifra.unobserve(en.target);
       const el = en.target, m = el.textContent.match(/^(\D*)(\d+)(.*)$/); if (!m) return;
       const fin = +m[2], t0 = performance.now();
-      const paso = (t) => { const k = Math.min(1, (t - t0) / 1400); el.textContent = m[1] + Math.round(fin * (1 - Math.pow(1 - k, 3))) + m[3]; if (k < 1) requestAnimationFrame(paso); };
+      const paso = (t) => { const k = Math.min(1, (t - t0) / 1600); el.textContent = m[1] + Math.round(fin * (1 - Math.pow(1 - k, 3))) + m[3]; if (k < 1) requestAnimationFrame(paso); };
       requestAnimationFrame(paso);
     }), { threshold: .6 });
     $$('.firma-datos dt').forEach((el) => obsCifra.observe(el));
-    // Foto del inicio: paralaje al bajar; el detalle sigue levemente al puntero
-    const heroImg = $('.hero-foto img'), det = $('.hero-detalle');
-    addEventListener('scroll', () => { if (scrollY < innerHeight) heroImg.style.translate = `0 ${scrollY * .25}px`; }, { passive: true });
-    if (matchMedia('(hover: hover)').matches) {
-      hero.addEventListener('pointermove', (e) => { det.style.translate = `${(e.clientX / innerWidth - .5) * -18}px ${(e.clientY / innerHeight - .5) * -14}px`; });
+    if (puntero) {
       // Botones dorados con leve atracción magnética
       $$('.btn-oro').forEach((b) => {
         b.addEventListener('pointermove', (e) => { const r = b.getBoundingClientRect(); b.style.translate = `${(e.clientX - r.left - r.width / 2) * .12}px ${(e.clientY - r.top - r.height / 2) * .2}px`; });
         b.addEventListener('pointerleave', () => (b.style.translate = ''));
       });
+      // Tarjetas del equipo que se inclinan con el puntero
+      document.addEventListener('pointermove', (e) => {
+        const t = e.target.closest('[data-inclinar]');
+        $$('[data-inclinar].inclinada').forEach((x) => { if (x !== t) { x.classList.remove('inclinada'); x.style.transform = ''; } });
+        if (!t) return;
+        const r = t.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+        t.classList.add('inclinada'); t.style.transform = `perspective(900px) rotateY(${x * 10}deg) rotateX(${y * -10}deg)`;
+        t.style.setProperty('--mx', `${(x + .5) * 100}%`); t.style.setProperty('--my', `${(y + .5) * 100}%`);
+      });
     }
   }
 
-  pintar();
+  pintarCarrito();
   observar();
 })();
-
