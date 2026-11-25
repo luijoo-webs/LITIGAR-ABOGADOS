@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://images.unsplash.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Syne:wght@500..800&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="https://images.unsplash.com/photo-1714974528737-3e6c7e4d11af?auto=format&fit=crop&w=1600&q=72">
-<link rel="stylesheet" href="assets/css/sitio.css?v=9">
+<link rel="stylesheet" href="assets/css/sitio.css?v=10">
 </head>
 <body>
 <div class="progreso" id="progreso" aria-hidden="true"></div>
@@ -101,17 +101,17 @@
   <div class="palabras" aria-hidden="true"><div class="palabras-pista" id="palabras"></div></div>
 </section>
 
-<!-- SERVICIOS: galería que se expande; cada servicio se añade a la solicitud -->
+<!-- SERVICIOS: todas las áreas a la vista; cada una abre su formulario -->
 <section class="seccion oscura servicios" id="areas">
   <div class="contenedor">
     <div class="cabeza-seccion">
       <div>
-        <p class="eyebrow claro revelar">Servicios <span class="cuenta" id="areasCuenta"></span></p>
-        <h2 class="revelar">Elija lo que necesita resolver</h2>
+        <p class="eyebrow claro revelar">Áreas de práctica</p>
+        <h2 class="revelar">¿En qué podemos ayudarle?</h2>
       </div>
-      <p class="apoyo claro revelar">Abra un área y añada los servicios a su solicitud con <strong>+</strong>. Al final pide su cita o cotización en un solo formulario.</p>
+      <p class="apoyo claro revelar">Elija el área de su caso y solicite asesoría. Si necesita varios temas, añádalos con <strong>+</strong> y pídalos juntos.</p>
     </div>
-    <div class="galeria" id="galeria"></div>
+    <div class="areas-grid" id="galeria"></div>
     <p class="nota-prov claro galeria-nota">Áreas tomadas de las publicaciones de la firma. Descripciones provisionales.</p>
   </div>
 </section>
@@ -133,14 +133,11 @@
 
 <!-- EQUIPO: espacios para las fotos oficiales (nunca stock) -->
 <section class="seccion equipo-seccion" id="equipo">
-  <span class="eco" aria-hidden="true" data-eco>EQUIPO</span>
   <div class="contenedor">
-    <div class="cabeza-seccion">
-      <div>
-        <p class="eyebrow claro revelar">Equipo</p>
-        <h2 class="revelar">Quién atiende su caso</h2>
-      </div>
-      <p class="apoyo claro revelar">Aquí irán las fotografías oficiales del equipo de Litigar. No usamos fotos de stock para representar a personas de la firma.</p>
+    <div class="equipo-cabeza">
+      <p class="eyebrow revelar">Nuestro equipo</p>
+      <h2 class="revelar">Abogados y asesores a su lado</h2>
+      <p class="apoyo revelar">Las fotografías y perfiles oficiales del equipo de Litigar se publicarán aquí. No usamos fotos de stock para representar a personas de la firma.</p>
     </div>
     <ul class="equipo" id="equipoLista"></ul>
   </div>
@@ -296,6 +293,6 @@
 <script src="config.js?v=7"></script>
 <script src="assets/js/datos.js?v=7"></script>
 <script src="assets/js/demo.js?v=7"></script>
-<script src="assets/js/sitio.js?v=8"></script>
+<script src="assets/js/sitio.js?v=10"></script>
 </body>
 </html>

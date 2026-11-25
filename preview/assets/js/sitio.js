@@ -125,23 +125,19 @@
     if (q) { const [a, t] = q.dataset.quitar.split('::'); alternar(a, t); }
   });
 
-  /* ===== Servicios: galería que se expande ===== */
+  /* ===== Servicios: todas las áreas a la vista ===== */
   const gal = $('#galeria');
-  $('#areasCuenta').textContent = String(L.areas.length).padStart(2, '0');
-  const servicioBtn = (area, tema, etiqueta, extra = '') => `<li><button type="button" class="servicio${extra}" data-servicio="${esc(llave(area, tema))}" aria-pressed="false"><span>${esc(etiqueta)}</span><span class="mas" aria-hidden="true">+</span></button></li>`;
-  gal.innerHTML = L.areas.map((a, i) => `<article class="panel${i === 0 ? ' activo' : ''}" data-i="${i}">
-      <img src="${foto(fotoArea[a.id], 1100)}" alt="" loading="lazy">
-      <button type="button" class="panel-tira" aria-expanded="${i === 0}" aria-controls="pc-${a.id}"><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${esc(a.corto)}</span></button>
-      <div class="panel-contenido" id="pc-${a.id}">
-        <p class="n">${String(i + 1).padStart(2, '0')} · ${esc(a.nombre)}</p>
-        <h3>${esc(a.resumen)}</h3>
-        <ul class="servicios-lista">${a.temas.map((t) => servicioBtn(a.id, t, t)).join('')}${servicioBtn(a.id, 'Asesoría general en ' + a.corto.toLowerCase(), 'Otro asunto de ' + a.corto.toLowerCase(), ' general')}</ul>
+  gal.innerHTML = L.areas.map((a, i) => `<article class="area-tarjeta revelar" id="area-${a.id}">
+      <figure class="area-img"><img src="${foto(fotoArea[a.id], 900)}" alt="" loading="lazy"><span class="ref">Imagen de referencia</span>
+        <span class="area-num">${String(i + 1).padStart(2, '0')}</span></figure>
+      <div class="area-cuerpo">
+        <h3>${esc(a.nombre)}</h3>
+        <p>${esc(a.resumen)}</p>
+        <ul class="area-temas">${a.temas.map((t) => `<li><button type="button" class="tema" data-servicio="${esc(llave(a.id, t))}" aria-pressed="false" aria-label="Añadir ${esc(t)} a mi solicitud"><span>${esc(t)}</span><span class="mas" aria-hidden="true">+</span></button></li>`).join('')}</ul>
+        <button type="button" class="btn btn-oro area-cta" data-solicitar-area="${a.id}">Solicitar asesoría ${flecha}</button>
       </div>
-      <span class="ref">Imagen de referencia</span>
     </article>`).join('');
-  const abrirPanel = (i) => $$('.panel', gal).forEach((p, j) => { p.classList.toggle('activo', i === j); $('.panel-tira', p).setAttribute('aria-expanded', i === j); });
-  gal.addEventListener('click', (e) => { const t = e.target.closest('.panel-tira'); if (t) abrirPanel(+t.closest('.panel').dataset.i); });
-  if (puntero) gal.addEventListener('pointerover', (e) => { const p = e.target.closest('.panel'); if (p && !p.classList.contains('activo')) abrirPanel(+p.dataset.i); });
+  const abrirPanel = (i) => { const t = $$('.area-tarjeta', gal)[i]; if (t) { t.classList.remove('resalta'); void t.offsetWidth; t.classList.add('resalta'); } };
 
   /* ===== Firma: palabras en movimiento ===== */
   const pal = L.areas.map((a) => `<span>${esc(a.corto)}</span><i>✦</i>`).join('');
@@ -161,11 +157,19 @@
   pasosEl.forEach((p) => { obsPaso.observe(p); p.addEventListener('mouseenter', () => activarPaso(+p.dataset.i)); });
 
   /* ===== Equipo: espacios reservados (aquí nunca se usan fotos de stock) ===== */
-  $('#equipoLista').innerHTML = L.equipo.map((m, i) => `<li class="miembro revelar"><div class="miembro-foto" data-inclinar>
-      <span class="esquinas" aria-hidden="true"></span><span class="barrido" aria-hidden="true"></span>
-      <span class="miembro-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
-      <span class="miembro-pend">Foto oficial<br>próximamente</span></div>
-    <p class="cargo">${esc(m.cargo)}</p><h3>${esc(m.nombre)}</h3><p class="esp">${esc(m.especialidad)}</p></li>`).join('');
+  const silueta = '<svg viewBox="0 0 120 140" aria-hidden="true"><circle cx="60" cy="48" r="24"/><path d="M14 140c2-30 22-50 46-50s44 20 46 50z"/></svg>';
+  $('#equipoLista').innerHTML = L.equipo.map((m, i) => `<li class="miembro revelar">
+      <div class="miembro-foto">${silueta}<span class="miembro-pend">Foto oficial pendiente</span>
+        <div class="miembro-capa"><button type="button" class="btn btn-claro btn-sm" data-perfil="${i}">Ver perfil</button></div></div>
+      <div class="miembro-texto"><h3>${esc(m.nombre)}</h3><p class="cargo">${esc(m.cargo)}</p></div></li>`).join('');
+  $('#equipoLista').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-perfil]'); if (!b) return;
+    const m = L.equipo[+b.dataset.perfil];
+    abrirCajon(`<p class="eyebrow">${esc(m.cargo)}</p><h2 id="cajonTitulo">${esc(m.nombre)}</h2>
+      <p><strong>Especialidad:</strong> ${esc(m.especialidad)}</p><p>${esc(m.bio)}</p>
+      <p class="ayuda">Perfil provisional. La firma lo completará desde el panel con la información y la fotografía oficial.</p>`, 'perfil');
+    setTimeout(() => $('.cerrar', cajon).focus(), 50);
+  });
 
   /* ===== Artículos ===== */
   const cats = ['Todos', ...new Set(L.articulos.map((a) => a.cat))];
@@ -203,7 +207,7 @@
     + canal('Instagram', '@litigar.abogados', c.instagram, true)
     + pendiente('Dirección') + pendiente('Horario');
   $('#faqs').innerHTML = L.faqs.map((f) => `<details><summary>${esc(f.p)}</summary><p>${esc(f.r)}</p></details>`).join('');
-  $('#pieAreas').innerHTML = L.areas.map((a, i) => `<li><a href="#areas" data-abrir-area="${i}">${esc(a.corto)}</a></li>`).join('');
+  $('#pieAreas').innerHTML = L.areas.map((a, i) => `<li><a href="#area-${a.id}" data-abrir-area="${i}">${esc(a.corto)}</a></li>`).join('');
   $('#pieContacto').innerHTML = c.telefonos.map((t) => `<li><a href="tel:+57${t.replace(/\s/g, '')}">${t}</a></li>`).join('')
     + `<li><a href="mailto:${c.correo}">${c.correo}</a></li><li><a href="${c.instagram}" target="_blank" rel="noopener">Instagram</a></li>`;
   document.addEventListener('click', (e) => { const a = e.target.closest('[data-abrir-area]'); if (a) abrirPanel(+a.dataset.abrirArea); });
@@ -237,6 +241,102 @@
   cf.addEventListener('change', (e) => { if (e.target.name === 'tipo') pintarTipo(); });
   limitesFecha(); pintarTipo();
 
+  // Validación común a los dos formularios; devuelve [campo, mensaje] o null
+  function revisar(d) {
+    if (d.nombre.length < 2) return ['nombre', 'Escriba su nombre.'];
+    if (d.apellido.length < 2) return ['apellido', 'Escriba su apellido.'];
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correo)) return ['correo', 'Revise el correo electrónico.'];
+    if (!/^[+\d\s()-]{7,20}$/.test(d.telefono)) return ['tel', 'Revise el número de teléfono.'];
+    if (d.tipo === 'cotizacion' && !d.servicios.length && d.mensaje.length < 10) return ['mensaje', 'Para cotizar, elija al menos un tema o cuéntenos qué necesita en el mensaje.'];
+    if (!d.consentimiento) return [null, 'Debe autorizar el tratamiento de datos para enviar la solicitud.'];
+    return null;
+  }
+  async function enviar(d) {
+    if (C.supabaseUrl && C.supabaseKey) {
+      // solicitar_cita valida y guarda en el servidor; el público no puede leer la tabla.
+      const r = await fetch(`${C.supabaseUrl}/rest/v1/rpc/solicitar_cita`, {
+        method: 'POST', headers: { apikey: C.supabaseKey, Authorization: `Bearer ${C.supabaseKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p: Object.assign({}, d, { politica_version: C.politicaVersion || 'provisional-2026-11' }) }),
+      });
+      const t = await r.json().catch(() => null);
+      if (!r.ok) throw new Error((t && t.message) || 'Error ' + r.status);
+      return { codigo: t, real: true };
+    }
+    const db = L.store.leer() || L.semilla(); db.citas = db.citas || [];
+    const codigo = `CIT-${hoy.getFullYear()}-${String(db.citas.length + 1).padStart(5, '0')}`;
+    db.citas.unshift(Object.assign({ id: codigo, estado: 'pendiente', creada: new Date().toISOString(), notas: '' }, d)); L.store.guardar(db);
+    return { codigo, real: false };
+  }
+  const mensajeError = (err) => `No pudimos enviar su solicitud${/Demasiadas|fecha|autoriz|servicio|cotizar/.test(err.message) ? ': ' + esc(err.message) : ''}. Intente de nuevo o <a href="${c.whatsapp}" target="_blank" rel="noopener">escríbanos por WhatsApp</a>.`;
+  const exitoHtml = (d, res) => `<div class="cita-exito"><svg class="check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>
+      <h3 tabindex="-1" id="citaOk">Recibimos su solicitud, ${esc(d.nombre)}</h3><p>Su código de seguimiento es</p><div class="codigo">${esc(res.codigo)}</div>
+      <p>${d.tipo === 'cita' ? 'Una persona del equipo le contactará para confirmar el día y la hora. Hasta entonces la cita no está confirmada.' : 'El equipo revisará lo que necesita y le enviará la cotización por el medio que indicó.'}</p>
+      ${res.real ? '' : '<p class="aviso-demo"><strong>Vista previa:</strong> se guardó solo en este navegador; no se envió a la firma.</p>'}</div>`;
+
+  /* ===== Formulario rápido por área (en el cajón lateral) ===== */
+  function formularioArea(id) {
+    const a = L.areas.find((x) => x.id === id);
+    const temas = [...a.temas, 'Otro asunto de ' + a.corto.toLowerCase()];
+    abrirCajon(`<p class="eyebrow">Solicitud de asesoría</p><h2 id="cajonTitulo">${esc(a.nombre)}</h2>
+      <form class="form-area" id="formArea" novalidate data-area="${a.id}">
+        <div class="tipo" role="radiogroup" aria-label="Tipo de solicitud">
+          <label><input type="radio" name="atipo" value="cita" checked><span>Agendar cita</span></label>
+          <label><input type="radio" name="atipo" value="cotizacion"><span>Pedir cotización</span></label>
+          <i class="tipo-marca" aria-hidden="true"></i>
+        </div>
+        <fieldset class="cita-bloque"><legend class="cita-etq">¿Sobre qué tema? (puede elegir varios)</legend>
+          <div class="temas-check">${temas.map((t) => `<label><input type="checkbox" value="${esc(t)}"${enCarrito(a.id, t) ? ' checked' : ''}><span>${esc(t)}</span></label>`).join('')}</div></fieldset>
+        <div class="campos-dos">
+          <div class="campo"><label for="a-nombre">Nombre *</label><input id="a-nombre" maxlength="80" autocomplete="given-name"></div>
+          <div class="campo"><label for="a-apellido">Apellido *</label><input id="a-apellido" maxlength="80" autocomplete="family-name"></div>
+        </div>
+        <div class="campos-dos">
+          <div class="campo"><label for="a-correo">Correo *</label><input id="a-correo" type="email" maxlength="120" autocomplete="email"></div>
+          <div class="campo"><label for="a-tel">Teléfono *</label><input id="a-tel" type="tel" maxlength="20" autocomplete="tel"></div>
+        </div>
+        <div class="campo" id="aModalidad"><label for="a-modalidad">¿Cómo prefiere la cita?</label><select id="a-modalidad"><option value="videollamada">Videollamada</option><option value="presencial">Presencial</option><option value="llamada">Llamada</option></select></div>
+        <div class="campo"><label for="a-mensaje">Cuéntenos brevemente su caso (opcional)</label><textarea id="a-mensaje" maxlength="2000" rows="3"></textarea></div>
+        <label class="consentimiento"><input type="checkbox" id="a-consent"><span>Autorizo a Litigar Group S.A.S. a tratar mis datos personales para atender esta solicitud, de acuerdo con la <button type="button" data-modal="datos">política de tratamiento de datos</button>. *</span></label>
+        <div class="trampa" aria-hidden="true"><label>No llenar este campo<input id="a-web" tabindex="-1" autocomplete="off"></label></div>
+        <p class="error" id="aError" role="alert"></p>
+        <button class="btn btn-oro btn-enviar" type="submit"><span id="aBoton">Solicitar cita</span> ${flecha}</button>
+        <p class="obligatorios">La cita queda confirmada cuando una persona del equipo le contacte.</p>
+      </form>`, 'area');
+    setTimeout(() => $('#a-nombre').focus(), 80);
+  }
+  document.addEventListener('click', (e) => { const b = e.target.closest('[data-solicitar-area]'); if (b) formularioArea(b.dataset.solicitarArea); });
+  cajon.addEventListener('change', (e) => {
+    if (e.target.name !== 'atipo') return;
+    const cot = e.target.value === 'cotizacion', f = $('#formArea');
+    f.classList.toggle('es-cotizacion', cot); $('#aModalidad').hidden = cot;
+    $('#aBoton').textContent = cot ? 'Pedir cotización' : 'Solicitar cita';
+  });
+  cajon.addEventListener('submit', async (e) => {
+    if (e.target.id !== 'formArea') return;
+    e.preventDefault();
+    const f = e.target, area = f.dataset.area, err = $('#aError'), v = (id) => $('#' + id, f).value.trim();
+    $$('.campo.mal', f).forEach((x) => x.classList.remove('mal')); err.textContent = '';
+    const tipo = $('input[name=atipo]:checked', f).value;
+    const temas = $$('.temas-check input:checked', f).map((x) => x.value);
+    const d = { tipo, nombre: v('a-nombre'), apellido: v('a-apellido'), correo: v('a-correo'), telefono: v('a-tel'),
+      areas: [area], servicios: temas.map((t) => `${nombreArea(area)} · ${t}`),
+      modalidad: tipo === 'cita' ? $('#a-modalidad', f).value : null, fecha_preferida: '', franja: '',
+      mensaje: v('a-mensaje'), consentimiento: $('#a-consent', f).checked, web: v('a-web') };
+    const mal = revisar(d);
+    if (mal) { if (mal[0]) { const i = $('#a-' + mal[0], f); i.closest('.campo').classList.add('mal'); i.focus(); } err.textContent = mal[1]; return; }
+    if (d.web) return; // campo trampa
+    const btn = $('.btn-enviar', f); btn.disabled = true; btn.classList.add('cargando'); $('#aBoton').textContent = 'Enviando…';
+    let res;
+    try { res = await enviar(d); } catch (er) {
+      btn.disabled = false; btn.classList.remove('cargando'); $('#aBoton').textContent = tipo === 'cita' ? 'Solicitar cita' : 'Pedir cotización';
+      err.innerHTML = mensajeError(er); return;
+    }
+    f.outerHTML = exitoHtml(d, res);
+    $('#citaOk', cajon).focus({ preventScroll: true });
+    // Los temas ya enviados salen del carrito
+    carrito = carrito.filter((x) => x.area !== area); guardar(); pintarCarrito();
+  });
+
   cf.addEventListener('submit', async (e) => {
     e.preventDefault(); cErr.textContent = '';
     $$('.campo.mal', cf).forEach((x) => x.classList.remove('mal'));
@@ -248,42 +348,19 @@
       fecha_preferida: cita ? v('c-fecha') : '', franja: cita ? $('#c-franja').value : '',
       mensaje: v('c-mensaje'), consentimiento: $('#c-consent').checked, web: v('c-web') };
     const falla = (id, m) => { if (id) { $('#' + id).closest('.campo').classList.add('mal'); $('#' + id).focus(); } cErr.textContent = m; };
-    if (d.nombre.length < 2) return falla('c-nombre', 'Escriba su nombre.');
-    if (d.apellido.length < 2) return falla('c-apellido', 'Escriba su apellido.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correo)) return falla('c-correo', 'Revise el correo electrónico.');
-    if (!/^[+\d\s()-]{7,20}$/.test(d.telefono)) return falla('c-tel', 'Revise el número de teléfono.');
     if (d.fecha_preferida && (d.fecha_preferida < $('#c-fecha').min || d.fecha_preferida > $('#c-fecha').max)) return falla('c-fecha', 'Elija una fecha entre hoy y los próximos cuatro meses.');
-    if (!cita && !d.servicios.length && d.mensaje.length < 10) return falla('c-mensaje', 'Para cotizar, añada al menos un servicio o cuéntenos qué necesita en el mensaje.');
-    if (!d.consentimiento) return falla(null, 'Debe autorizar el tratamiento de datos para enviar la solicitud.');
+    const mal = revisar(d);
+    if (mal) return falla(mal[0] && 'c-' + mal[0], mal[1]);
     if (d.web) return; // campo trampa: lo llenó un bot
     const btn = $('.btn-enviar', cf), txt = $('#citaBoton'); btn.disabled = true; btn.classList.add('cargando'); txt.textContent = 'Enviando…';
-    let codigo, real = false;
-    try {
-      if (C.supabaseUrl && C.supabaseKey) {
-        // solicitar_cita valida y guarda en el servidor; el público no puede leer la tabla.
-        const r = await fetch(`${C.supabaseUrl}/rest/v1/rpc/solicitar_cita`, {
-          method: 'POST', headers: { apikey: C.supabaseKey, Authorization: `Bearer ${C.supabaseKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ p: Object.assign({}, d, { politica_version: C.politicaVersion || 'provisional-2026-11' }) }),
-        });
-        const t = await r.json().catch(() => null);
-        if (!r.ok) throw new Error((t && t.message) || 'Error ' + r.status);
-        codigo = t; real = true;
-      } else {
-        const db = L.store.leer() || L.semilla(); db.citas = db.citas || [];
-        codigo = `CIT-${hoy.getFullYear()}-${String(db.citas.length + 1).padStart(5, '0')}`;
-        db.citas.unshift(Object.assign({ id: codigo, estado: 'pendiente', creada: new Date().toISOString(), notas: '' }, d)); L.store.guardar(db);
-      }
-    } catch (err) {
+    let res;
+    try { res = await enviar(d); } catch (err) {
       btn.disabled = false; btn.classList.remove('cargando'); pintarTipo();
-      cErr.innerHTML = `No pudimos enviar su solicitud${/Demasiadas|fecha|autoriz|servicio/.test(err.message) ? ': ' + esc(err.message) : ''}. Intente de nuevo o <a href="${c.whatsapp}" target="_blank" rel="noopener">escríbanos por WhatsApp</a>.`;
+      cErr.innerHTML = mensajeError(err);
       return;
     }
     const cuerpo = $('#citaCuerpo'), previo = cuerpo.innerHTML;
-    cuerpo.innerHTML = `<div class="cita-exito"><svg class="check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>
-      <h3 tabindex="-1" id="citaOk">Recibimos su solicitud, ${esc(d.nombre)}</h3><p>Su código de seguimiento es</p><div class="codigo">${esc(codigo)}</div>
-      <p>${cita ? 'Una persona del equipo le contactará para confirmar el día y la hora. Hasta entonces la cita no está confirmada.' : 'El equipo revisará lo que necesita y le enviará la cotización por el medio que indicó.'}</p>
-      ${real ? '' : '<p class="aviso-demo"><strong>Vista previa:</strong> se guardó solo en este navegador; no se envió a la firma.</p>'}
-      <button type="button" class="btn btn-linea btn-sm" id="citaOtra">Enviar otra solicitud</button></div>`;
+    cuerpo.innerHTML = exitoHtml(d, res) + '<p style="text-align:center"><button type="button" class="btn btn-linea btn-sm" id="citaOtra">Enviar otra solicitud</button></p>';
     $('#citaOk').focus({ preventScroll: true });
     carrito = []; try { localStorage.removeItem(CLAVE); } catch (e2) {}
     $('#citaOtra').addEventListener('click', () => { cuerpo.innerHTML = previo; cf.reset(); limitesFecha(); pintarTipo(); pintarCarrito(); });
@@ -293,7 +370,7 @@
   /* ===== Movimiento ===== */
   const prog = $('#progreso');
   const enVista = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; };
-  const paralaje = $$('[data-vel]'), eco = $('[data-eco]'), palabras = $('#palabras'), heroImg = $('.hero-foto img');
+  const paralaje = $$('[data-vel]'), palabras = $('#palabras'), heroImg = $('.hero-foto img');
   let pedido = false;
   function cuadro() {
     pedido = false;
@@ -302,7 +379,6 @@
     if (heroImg && scrollY < innerHeight) heroImg.style.translate = `0 ${scrollY * .25}px`;
     paralaje.forEach((el) => { if (!enVista(el)) return; const r = el.getBoundingClientRect(); el.style.translate = `0 ${(r.top + r.height / 2 - innerHeight / 2) * +el.dataset.vel}px`; });
     if (enVista(palabras)) palabras.style.transform = `translateX(${-((scrollY * .35) % (palabras.scrollWidth / 3))}px)`;
-    if (enVista(eco)) eco.style.translate = `${eco.parentElement.getBoundingClientRect().top * .3}px 0`;
   }
   addEventListener('scroll', () => { if (!pedido) { pedido = true; requestAnimationFrame(cuadro); } }, { passive: true });
   cuadro();
@@ -328,15 +404,6 @@
       $$('.btn-oro').forEach((b) => {
         b.addEventListener('pointermove', (e) => { const r = b.getBoundingClientRect(); b.style.translate = `${(e.clientX - r.left - r.width / 2) * .12}px ${(e.clientY - r.top - r.height / 2) * .2}px`; });
         b.addEventListener('pointerleave', () => (b.style.translate = ''));
-      });
-      // Tarjetas del equipo que se inclinan con el puntero
-      document.addEventListener('pointermove', (e) => {
-        const t = e.target.closest('[data-inclinar]');
-        $$('[data-inclinar].inclinada').forEach((x) => { if (x !== t) { x.classList.remove('inclinada'); x.style.transform = ''; } });
-        if (!t) return;
-        const r = t.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
-        t.classList.add('inclinada'); t.style.transform = `perspective(900px) rotateY(${x * 10}deg) rotateX(${y * -10}deg)`;
-        t.style.setProperty('--mx', `${(x + .5) * 100}%`); t.style.setProperty('--my', `${(y + .5) * 100}%`);
       });
     }
   }
