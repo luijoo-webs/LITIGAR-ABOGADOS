@@ -41,9 +41,9 @@
   ];
 
   const pasos = [
-    { t: 'Nos cuenta su caso', d: 'Por WhatsApp, por teléfono o con el formulario de este sitio. No necesita términos jurídicos.' },
-    { t: 'Le decimos sus posibilidades', d: 'Hablamos con resultados: antes de empezar le explicamos con franqueza las posibilidades de un resultado favorable. En la mayoría de procesos, los honorarios se definen a partir de esa evaluación.' },
-    { t: 'Le acompañamos siempre', d: 'Acompañamiento virtual permanente, con líneas de atención personalizada para clientes nuevos y antiguos.' },
+    { t: 'Nos cuenta su caso', d: 'Por WhatsApp, por teléfono o con el formulario.' },
+    { t: 'Le decimos sus posibilidades', d: 'Antes de empezar, con franqueza. Los honorarios parten de esa evaluación.' },
+    { t: 'Le acompañamos siempre', d: 'Atención virtual permanente para clientes nuevos y antiguos.' },
   ];
 
   // Equipo según el cuestionario. Aún no hay fotografías oficiales (la firma las tomará).

@@ -9,10 +9,6 @@
   const fecha = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
   const c = L.contacto;
   const flecha = '<span class="f" aria-hidden="true">→</span>';
-  // Fotografías de referencia (Unsplash) mientras llegan las de la firma
-  const foto = (id, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=72`;
-  const fotoArea = { familia: '1562564055-71e051d33c19', laboral: '1551135049-8a33b5883817', civil: '1564846824194-346b7871b855',
-    'seguridad-social': '1758518729912-bf3a84c400e0', tributario: '1520607162513-77705c0f0d4a', penal: '1589829545856-d10d557cf95f' };
 
   $$('[data-wa]').forEach((a) => (a.href = c.whatsapp));
   $('#anio').textContent = new Date().getFullYear();
@@ -125,36 +121,29 @@
     if (q) { const [a, t] = q.dataset.quitar.split('::'); alternar(a, t); }
   });
 
-  /* ===== Servicios: todas las áreas a la vista ===== */
+  /* ===== Servicios: cajas con ícono; el detalle y los temas están en el formulario ===== */
+  const iconos = {
+    familia: '<circle cx="16" cy="12" r="4"/><circle cx="32" cy="12" r="4"/><circle cx="24" cy="24" r="3"/><path d="M8 40v-9a8 8 0 0 1 16 0M24 40v-9a8 8 0 0 1 16 0M18 40v-5a6 6 0 0 1 12 0v5"/>',
+    laboral: '<rect x="6" y="15" width="36" height="24" rx="2"/><path d="M17 15v-4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4M6 26h36M21 26v4h6v-4"/>',
+    tributario: '<rect x="10" y="5" width="28" height="38" rx="2"/><rect x="15" y="10" width="18" height="8"/><path d="M16 25h2M23 25h2M30 25h2M16 31h2M23 31h2M30 31h2M16 37h2M23 37h2M30 37h2"/>',
+    penal: '<path d="M24 6v34M14 40h20M10 12h28M10 12l-6 14a6 6 0 0 0 12 0zM38 12l-6 14a6 6 0 0 0 12 0z"/>',
+    civil: '<path d="M12 5h17l9 9v29H12zM29 5v9h9M17 22h16M17 28h16M17 34h10"/>',
+    'seguridad-social': '<path d="M24 5l15 6v11c0 10-6.5 17-15 21C15.5 39 9 32 9 22V11z"/><path d="M17 24l5 5 9-10"/>',
+  };
   const gal = $('#galeria');
-  gal.innerHTML = L.areas.map((a, i) => `<article class="area-tarjeta revelar" id="area-${a.id}">
-      <figure class="area-img"><img src="${foto(fotoArea[a.id], 900)}" alt="" loading="lazy"><span class="ref">Imagen de referencia</span>
-        <span class="area-num">${String(i + 1).padStart(2, '0')}</span></figure>
-      <div class="area-cuerpo">
-        <h3>${esc(a.nombre)}</h3>
-        <p>${esc(a.resumen)}</p>
-        <ul class="area-temas">${a.temas.map((t) => `<li><button type="button" class="tema" data-servicio="${esc(llave(a.id, t))}" aria-pressed="false" aria-label="Añadir ${esc(t)} a mi solicitud"><span>${esc(t)}</span><span class="mas" aria-hidden="true">+</span></button></li>`).join('')}</ul>
-        <button type="button" class="btn btn-oro area-cta" data-solicitar-area="${a.id}">Solicitar asesoría ${flecha}</button>
-      </div>
-    </article>`).join('');
-  const abrirPanel = (i) => { const t = $$('.area-tarjeta', gal)[i]; if (t) { t.classList.remove('resalta'); void t.offsetWidth; t.classList.add('resalta'); } };
+  gal.innerHTML = L.areas.map((a, i) => `<button type="button" class="servicio-caja revelar" id="area-${a.id}" data-solicitar-area="${a.id}">
+      <svg class="servicio-icono" viewBox="0 0 48 48" aria-hidden="true">${iconos[a.id] || ''}</svg>
+      <span class="servicio-nombre">${esc(a.nombre)}</span>
+      <span class="servicio-flecha" aria-hidden="true">↗</span>
+    </button>`).join('');
+  const abrirPanel = (i) => { const t = $$('.servicio-caja', gal)[i]; if (t) { t.classList.remove('resalta'); void t.offsetWidth; t.classList.add('resalta'); } };
 
   /* ===== Firma: palabras en movimiento ===== */
   const pal = L.areas.map((a) => `<span>${esc(a.corto)}</span><i>✦</i>`).join('');
   $('#palabras').innerHTML = pal + pal + pal;
 
-  /* ===== Cómo trabajamos: relato con scroll ===== */
-  const fotosPaso = ['1758519288550-1975537cff9a', '1564846824194-346b7871b855', '1551135049-8a33b5883817'];
-  $('#procesoFotos').innerHTML = L.pasos.map((p, i) => `<figure class="${i === 0 ? 'activa' : ''}"><img src="${foto(fotosPaso[i % fotosPaso.length], 1000)}" alt="" loading="lazy"></figure>`).join('') + '<span class="ref">Imagen de referencia</span>';
-  $('#pasos').innerHTML = L.pasos.map((p, i) => `<li class="paso${i === 0 ? ' activo' : ''}" data-i="${i}"><span class="paso-n">${String(i + 1).padStart(2, '0')}</span><div><h3>${esc(p.t)}</h3><p>${esc(p.d)}</p></div></li>`).join('');
-  const pasosEl = $$('.paso'), fotosEl = $$('#procesoFotos figure');
-  const activarPaso = (i) => {
-    pasosEl.forEach((p, j) => p.classList.toggle('activo', j === i));
-    fotosEl.forEach((f, j) => f.classList.toggle('activa', j === i));
-    $('#procesoNum').textContent = String(i + 1).padStart(2, '0');
-  };
-  const obsPaso = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) activarPaso(+en.target.dataset.i); }), { rootMargin: '-45% 0px -45% 0px' });
-  pasosEl.forEach((p) => { obsPaso.observe(p); p.addEventListener('mouseenter', () => activarPaso(+p.dataset.i)); });
+  /* ===== Cómo trabajamos: tres pasos cortos ===== */
+  $('#pasos').innerHTML = L.pasos.map((p, i) => `<li class="paso-col revelar"><span class="paso-n">${String(i + 1).padStart(2, '0')}</span><h3>${esc(p.t)}</h3><p>${esc(p.d)}</p></li>`).join('');
 
   /* ===== Equipo: espacios reservados (aquí nunca se usan fotos de stock) ===== */
   const silueta = '<svg viewBox="0 0 120 140" aria-hidden="true"><circle cx="60" cy="48" r="24"/><path d="M14 140c2-30 22-50 46-50s44 20 46 50z"/></svg>';
@@ -301,11 +290,21 @@
         <div class="trampa" aria-hidden="true"><label>No llenar este campo<input id="a-web" tabindex="-1" autocomplete="off"></label></div>
         <p class="error" id="aError" role="alert"></p>
         <button class="btn btn-oro btn-enviar" type="submit"><span id="aBoton">Solicitar cita</span> ${flecha}</button>
+        <button type="button" class="btn-agregar" data-agregar-area>¿Necesita temas de varias áreas? Añada los marcados a su solicitud y siga viendo</button>
         <p class="obligatorios">La cita queda confirmada cuando una persona del equipo le contacte.</p>
       </form>`, 'area');
     setTimeout(() => $('#a-nombre').focus(), 80);
   }
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-solicitar-area]'); if (b) formularioArea(b.dataset.solicitarArea); });
+  cajon.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-agregar-area]')) return;
+    const f = $('#formArea'), area = f.dataset.area;
+    const marcados = $$('.temas-check input:checked', f).map((x) => x.value).filter((t) => !enCarrito(area, t));
+    if (!marcados.length) { $('#aError').textContent = 'Marque al menos un tema para añadirlo.'; return; }
+    carrito = [...carrito, ...marcados.map((tema) => ({ area, tema }))]; guardar(); pintarCarrito();
+    cerrarCajon();
+    avisar(`${marcados.length} tema${marcados.length === 1 ? '' : 's'} añadido${marcados.length === 1 ? '' : 's'} a su solicitud <a href="#cita">Solicitar →</a>`);
+  });
   cajon.addEventListener('change', (e) => {
     if (e.target.name !== 'atipo') return;
     const cot = e.target.value === 'cotizacion', f = $('#formArea');
@@ -399,7 +398,7 @@
       const paso = (t) => { const k = Math.min(1, (t - t0) / 1600); el.textContent = m[1] + Math.round(fin * (1 - Math.pow(1 - k, 3))) + m[3]; if (k < 1) requestAnimationFrame(paso); };
       requestAnimationFrame(paso);
     }), { threshold: .6 });
-    $$('.firma-datos dt').forEach((el) => obsCifra.observe(el));
+    $$('.cifras-lista dt').forEach((el) => obsCifra.observe(el));
     if (puntero) {
       // Botones dorados con leve atracción magnética
       $$('.btn-oro').forEach((b) => {
