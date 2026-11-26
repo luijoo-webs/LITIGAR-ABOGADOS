@@ -109,7 +109,7 @@
     const n = carrito.length;
     abrirCajon(`<p class="eyebrow">Mi solicitud</p><h2 id="cajonTitulo">${n ? `${n} servicio${n === 1 ? '' : 's'} de interés` : 'Aún no ha añadido servicios'}</h2>
       ${n ? `<ul class="carrito-lista">${carrito.map((x) => itemHtml(x, 'Quitar')).join('')}</ul>`
-        : '<p class="ayuda">Abra un área en la sección de servicios y pulse <strong>+</strong> en lo que necesite. También puede pedir la cita y contarnos su caso en el mensaje.</p>'}
+        : '<p class="ayuda">En la sección de servicios pulse <strong>Agregar a mi solicitud</strong> en lo que necesite. También puede pedir la cita y contarnos su caso en el mensaje.</p>'}
       <div class="carrito-acciones"><a href="#cita" class="btn btn-oro" data-cerrar-ir>Pedir cita o cotización ${flecha}</a><a href="#areas" class="btn btn-linea" data-cerrar-ir>Seguir viendo servicios</a></div>`, 'carrito');
     if (!refrescar) setTimeout(() => $('.cerrar', cajon).focus(), 50);
   }
@@ -131,12 +131,36 @@
     'seguridad-social': '<path d="M24 5l15 6v11c0 10-6.5 17-15 21C15.5 39 9 32 9 22V11z"/><path d="M17 24l5 5 9-10"/>',
   };
   const gal = $('#galeria');
-  gal.innerHTML = L.areas.map((a, i) => `<button type="button" class="servicio-caja revelar" id="area-${a.id}" data-solicitar-area="${a.id}">
-      <svg class="servicio-icono" viewBox="0 0 48 48" aria-hidden="true">${iconos[a.id] || ''}</svg>
-      <span class="servicio-nombre">${esc(a.nombre)}</span>
-      <span class="servicio-flecha" aria-hidden="true">↗</span>
-    </button>`).join('');
-  const abrirPanel = (i) => { const t = $$('.servicio-caja', gal)[i]; if (t) { t.classList.remove('resalta'); void t.offsetWidth; t.classList.add('resalta'); } };
+  const mf = $('#movilFecha'); if (mf) mf.textContent = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+  const tonos = ['azul', 'oro', 'noche', 'oro', 'noche', 'azul'];
+  gal.innerHTML = L.areas.map((a, i) => `<article class="producto revelar" id="area-${a.id}">
+      <button type="button" class="producto-media tono-${tonos[i % 6]}" data-solicitar-area="${a.id}" aria-label="Ver temas y pedir cita: ${esc(a.nombre)}">
+        <span class="producto-num">${String(i + 1).padStart(2, '0')}</span>
+        <svg class="producto-arte" viewBox="0 0 48 48" aria-hidden="true">${iconos[a.id] || ''}</svg>
+        <span class="producto-ver">Ver temas</span>
+      </button>
+      <div class="producto-info">
+        <p class="producto-cat"><span>${a.id === 'tributario' ? 'Contadores' : 'Abogados'}</span></p>
+        <h3 class="producto-nombre">${esc(a.nombre)}</h3>
+        <p class="producto-desc">${esc(a.resumen)}</p>
+        <button type="button" class="producto-temas" data-solicitar-area="${a.id}">Ver temas y pedir cita <span aria-hidden="true">→</span></button>
+      </div>
+      <button type="button" class="producto-add" data-servicio="${esc(llave(a.id, 'Asesoría general en ' + a.corto.toLowerCase()))}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.4 8.4-8 9.8C7.4 20.4 4 17 4 12V6z"/></svg>
+        <span class="on">Agregar a mi solicitud</span><span class="off">✓ En su solicitud</span><i aria-hidden="true">→</i>
+      </button>
+    </article>`).join('');
+  const abrirPanel = (i) => { const t = $$('.producto', gal)[i]; if (t) { t.classList.remove('resalta'); void t.offsetWidth; t.classList.add('resalta'); } };
+  // Inclinación 3D de las tarjetas al mover el mouse (como en RG Seguros)
+  if (!reducir && matchMedia('(hover: hover) and (pointer: fine)').matches) $$('.producto-media', gal).forEach((t) => {
+    t.classList.add('tilt');
+    t.addEventListener('pointermove', (e) => {
+      const r = t.getBoundingClientRect();
+      t.style.setProperty('--ry', (((e.clientX - r.left) / r.width - .5) * 14).toFixed(2) + 'deg');
+      t.style.setProperty('--rx', ((.5 - (e.clientY - r.top) / r.height) * 14).toFixed(2) + 'deg');
+    });
+    t.addEventListener('pointerleave', () => { t.style.setProperty('--rx', '0deg'); t.style.setProperty('--ry', '0deg'); });
+  });
 
   /* ===== Firma: palabras en movimiento ===== */
   const pal = L.areas.map((a) => `<span>${esc(a.corto)}</span><i>✦</i>`).join('');
