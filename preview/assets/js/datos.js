@@ -60,17 +60,17 @@
   // Títulos basados en temas publicados en el Instagram de la firma; fechas y resúmenes provisionales.
   const articulos = [
     { titulo: '¿Declaras renta? Lo que conviene revisar antes de presentar', cat: 'Contable', fecha: '2026-11-18', destacado: true, min: 6,
-      resumen: 'Resumen provisional: quiénes deben declarar, qué documentos reunir y qué hacer si ya presentó con errores.' },
+      resumen: 'quiénes deben declarar, qué documentos reunir y qué hacer si ya presentó con errores.' },
     { titulo: 'La inasistencia alimentaria también es un delito', cat: 'Familia', fecha: '2026-11-10', min: 4,
-      resumen: 'Resumen provisional sobre las consecuencias de no cumplir la cuota alimentaria.' },
+      resumen: 'Sobre las consecuencias de no cumplir la cuota alimentaria.' },
     { titulo: '¿Conoces el despido indirecto?', cat: 'Laboral', fecha: '2026-11-02', min: 5,
-      resumen: 'Resumen provisional: cuándo el trabajador puede terminar el contrato por causas atribuibles al empleador.' },
+      resumen: 'cuándo el trabajador puede terminar el contrato por causas atribuibles al empleador.' },
     { titulo: '¿A los 18 o a los 25 años se quita la cuota de alimentos?', cat: 'Familia', fecha: '2026-10-25', min: 4,
-      resumen: 'Resumen provisional sobre la duración de la obligación alimentaria con hijos mayores de edad.' },
+      resumen: 'Sobre la duración de la obligación alimentaria con hijos mayores de edad.' },
     { titulo: 'Un accidente antes de entrar al trabajo, ¿puede ser laboral?', cat: 'Laboral', fecha: '2026-10-15', min: 5,
-      resumen: 'Resumen provisional sobre un pronunciamiento de la Corte Suprema de Justicia.' },
+      resumen: 'Sobre un pronunciamiento de la Corte Suprema de Justicia.' },
     { titulo: 'Impugnación de paternidad: plazos y pruebas', cat: 'Familia', fecha: '2026-10-05', min: 6,
-      resumen: 'Resumen provisional sobre el proceso y la prueba de ADN.' },
+      resumen: 'Sobre el proceso y la prueba de ADN.' },
   ];
 
   const faqs = [

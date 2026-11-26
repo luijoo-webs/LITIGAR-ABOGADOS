@@ -107,9 +107,13 @@
   }
   function abrirCarrito(refrescar) {
     const n = carrito.length;
+    const tile = (area, cls) => `<span class="producto-media bolsa-tile ${cls} tono-${tonos[Math.max(0, L.areas.findIndex((a) => a.id === area)) % 6]}" aria-hidden="true"><svg class="producto-arte" viewBox="0 0 48 48">${iconos[area] || ''}</svg></span>`;
     abrirCajon(`<p class="eyebrow">Mi solicitud</p><h2 id="cajonTitulo">${n ? `${n} servicio${n === 1 ? '' : 's'} de interés` : 'Aún no ha añadido servicios'}</h2>
-      ${n ? `<ul class="carrito-lista">${carrito.map((x) => itemHtml(x, 'Quitar')).join('')}</ul>`
-        : '<p class="ayuda">En la sección de servicios pulse <strong>Agregar a mi solicitud</strong> en lo que necesite. También puede pedir la cita y contarnos su caso en el mensaje.</p>'}
+      ${n ? `<ul class="bolsa">${carrito.map((x, i) => `<li class="bolsa-item" style="--d:${i * 70}ms">${tile(x.area, '')}
+          <span class="bolsa-txt"><small>${esc(nombreArea(x.area))}</small><b>${esc(x.tema)}</b></span>
+          <button type="button" class="bolsa-quitar" data-quitar="${esc(llave(x.area, x.tema))}" aria-label="Quitar ${esc(x.tema)}">×</button></li>`).join('')}</ul>
+        <p class="bolsa-nota">Le contactamos para confirmar la cita o enviarle la cotización.</p>`
+        : `<div class="bolsa-vacia">${tile('laboral', 'grande')}<p>En la sección de servicios pulse <strong>Agregar a mi solicitud</strong> en lo que necesite, o pida la cita y cuéntenos su caso.</p></div>`}
       <div class="carrito-acciones"><a href="#cita" class="btn btn-oro" data-cerrar-ir>Pedir cita o cotización ${flecha}</a><a href="#areas" class="btn btn-linea" data-cerrar-ir>Seguir viendo servicios</a></div>`, 'carrito');
     if (!refrescar) setTimeout(() => $('.cerrar', cajon).focus(), 50);
   }
@@ -172,17 +176,31 @@
   /* ===== Equipo: espacios reservados (aquí nunca se usan fotos de stock) ===== */
   const silueta = '<svg viewBox="0 0 120 140" aria-hidden="true"><circle cx="60" cy="48" r="24"/><path d="M14 140c2-30 22-50 46-50s44 20 46 50z"/></svg>';
   $('#equipoLista').innerHTML = L.equipo.map((m, i) => `<li class="miembro revelar">
-      <div class="miembro-foto">${silueta}<span class="miembro-pend">Foto oficial pendiente</span>
+      <div class="miembro-foto">${silueta}
         <div class="miembro-capa"><button type="button" class="btn btn-claro btn-sm" data-perfil="${i}">Ver perfil</button></div></div>
       <div class="miembro-texto"><h3>${esc(m.nombre)}</h3><p class="cargo">${esc(m.cargo)}</p>${m.especialidad ? `<p class="esp">${esc(m.especialidad)}</p>` : ''}</div></li>`).join('');
   $('#equipoLista').addEventListener('click', (e) => {
     const b = e.target.closest('[data-perfil]'); if (!b) return;
-    const m = L.equipo[+b.dataset.perfil];
-    abrirCajon(`<p class="eyebrow">${esc(m.cargo)}</p><h2 id="cajonTitulo">${esc(m.nombre)}</h2>
-      ${m.especialidad ? `<p><strong>Especialidad:</strong> ${esc(m.especialidad)}</p>` : ''}${m.bio ? `<p>${esc(m.bio)}</p>` : ''}
-      <p class="ayuda">La fotografía oficial y el perfil completo (estudios y trayectoria) se publicarán cuando la firma los envíe.</p>`, 'perfil');
-    setTimeout(() => $('.cerrar', cajon).focus(), 50);
+    const m = L.equipo[+b.dataset.perfil], partes = m.nombre.split(' ');
+    const corte = partes.length > 2 ? partes.length - 2 : partes.length - 1;
+    $('#perfilBarra').textContent = 'Conozca a ' + partes[0];
+    $('#perfilCuerpo').innerHTML = `<div class="perfil-top">
+        <div class="perfil-foto">${silueta}</div>
+        <div class="perfil-txt">
+          <p class="perfil-eyebrow">${esc(m.cargo)}</p>
+          <h2 id="perfilTitulo">${esc(partes.slice(0, corte).join(' '))} <span>${esc(partes.slice(corte).join(' '))}</span></h2>
+          <p class="perfil-lead">${esc(m.bio || 'Hace parte del equipo de Litigar Group – Abogados & Asociados.')}</p>
+          <div class="perfil-btns"><a href="#cita" class="btn btn-oro" data-cerrar-perfil>Agendar cita ${flecha}</a><a href="${c.whatsapp}" target="_blank" rel="noopener" class="btn btn-linea">WhatsApp</a></div>
+        </div>
+      </div>
+      <div class="perfil-tarjetas">
+        <article class="pt pt-azul"><p class="perfil-eyebrow">${m.especialidad ? 'Especialidad' : 'En la firma'}</p><h3>${esc(m.especialidad || m.cargo)}</h3><p>Abogados y contadores en un mismo equipo. Antes de empezar le decimos, con franqueza, sus posibilidades.</p></article>
+        <article class="pt pt-oro"><p class="perfil-eyebrow">Atención</p><h3>Valledupar y todo el país</h3><p>Presencial, videollamada o llamada, con atención virtual permanente para clientes nuevos y antiguos.</p></article>
+      </div>`;
+    $('#perfil').showModal(); $('#perfilCuerpo').scrollTop = 0;
   });
+  const perfil = $('#perfil');
+  perfil.addEventListener('click', (e) => { if (e.target === perfil || e.target.closest('[data-cerrar-perfil]')) perfil.close(); });
 
   /* ===== Artículos ===== */
   const cats = ['Todos', ...new Set(L.articulos.map((a) => a.cat))];
@@ -205,7 +223,6 @@
     const art = L.articulos.find((x) => x.titulo === b.dataset.art);
     const area = L.areas.find((x) => x.corto.toLowerCase().startsWith(art.cat.toLowerCase().slice(0, 5)));
     abrirCajon(`<p class="eyebrow">${esc(art.cat)} · ${fecha(art.fecha)} · ${art.min} min</p><h2 id="cajonTitulo">${esc(art.titulo)}</h2><p>${esc(art.resumen)}</p>
-      <p class="ayuda">El artículo completo lo publicará la firma desde el panel. Este texto es provisional.</p>
       ${area ? `<button type="button" class="btn btn-tinta" data-servicio="${esc(llave(area.id, 'Asesoría general en ' + area.corto.toLowerCase()))}"><span class="mas" aria-hidden="true">+</span> Añadir asesoría en ${esc(area.corto.toLowerCase())}</button>` : ''}`, 'articulo');
     pintarCarrito();
     setTimeout(() => $('.cerrar', cajon).focus(), 50);
@@ -213,12 +230,11 @@
 
   /* ===== Contacto, preguntas y pie ===== */
   const canal = (label, valor, href, ext) => `<li><a href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}><small>${label}</small><strong>${esc(valor)}</strong></a></li>`;
-  const pendiente = (label) => `<li><div class="pend"><small>${label}</small><strong>Por confirmar</strong></div></li>`;
   $('#canales').innerHTML = canal('WhatsApp', 'Escribir ahora', c.whatsapp, true)
     + c.telefonos.map((t) => canal('Teléfono', t, `tel:+57${t.replace(/\s/g, '')}`)).join('')
     + canal('Correo', c.correo, `mailto:${c.correo}`)
     + canal('Instagram', '@litigar.abogados', c.instagram, true)
-    + `<li><div class="pend"><small>Atención</small><strong>${esc(c.ciudad)}</strong></div></li>` + pendiente('Horario');
+    + `<li><div class="pend"><small>Atención</small><strong>${esc(c.ciudad)}</strong></div></li>`;
   $('#faqs').innerHTML = L.faqs.map((f) => `<details><summary>${esc(f.p)}</summary><p>${esc(f.r)}</p></details>`).join('');
   $('#pieAreas').innerHTML = L.areas.map((a, i) => `<li><a href="#area-${a.id}" data-abrir-area="${i}">${esc(a.corto)}</a></li>`).join('');
   $('#pieContacto').innerHTML = c.telefonos.map((t) => `<li><a href="tel:+57${t.replace(/\s/g, '')}">${t}</a></li>`).join('')
@@ -228,11 +244,10 @@
   /* ===== Ventanas legales ===== */
   const modal = $('#modal');
   const legales = {
-    privacidad: `<h2>Política de privacidad</h2><p class="nota-prov">Documento pendiente</p>
-      <p>La firma redactará este documento. Debe explicar qué información recoge el sitio, para qué la usa, cuánto tiempo la conserva y cómo puede el usuario ejercer sus derechos.</p>`,
-    datos: `<h2>Tratamiento de datos personales</h2><p class="nota-prov">Documento pendiente · Ley 1581 de 2012</p>
-      <p>Texto provisional. Al enviar una solicitud, usted autoriza a Litigar Group S.A.S. a tratar sus datos personales para atender su solicitud y contactarle. Puede conocer, actualizar, rectificar y suprimir sus datos, y revocar la autorización, escribiendo a ${c.correo}.</p>
-      <p>La política definitiva (responsable, finalidades, derechos del titular y procedimiento de consultas y reclamos) la redactará y aprobará la firma.</p>`,
+    privacidad: `<h2>Política de privacidad</h2>
+      <p>Este sitio solo recoge los datos que usted escribe en los formularios (nombre, correo, teléfono y mensaje) para atender su solicitud y contactarle. Para conocer, actualizar o suprimir sus datos escriba a ${c.correo}.</p>`,
+    datos: `<h2>Tratamiento de datos personales</h2><p class="nota-prov">Ley 1581 de 2012</p>
+      <p>Al enviar una solicitud, usted autoriza a Litigar Group S.A.S. a tratar sus datos personales para atender su solicitud y contactarle. Puede conocer, actualizar, rectificar y suprimir sus datos, y revocar la autorización, escribiendo a ${c.correo}.</p>`,
   };
   $('[data-cerrar]', modal).addEventListener('click', () => modal.close());
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });

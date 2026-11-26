@@ -704,3 +704,61 @@ h2 { font-size: clamp(1.5rem, 2.7vw, 2.25rem); font-weight: 700; text-transform:
   .producto-arte { width: 24%; }
   .servicios-grid { gap: 40px; }
 }
+
+/* ---------- Perfil del equipo: ventana con tarjeta (estilo RG) ---------- */
+.perfil-dlg { width: min(980px, calc(100vw - 32px)); max-height: calc(100svh - 32px); padding: 0; border: 0; border-radius: 22px; overflow: hidden; background: var(--blanco); color: var(--tinta); box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .6); }
+.perfil-dlg[open] { display: flex; flex-direction: column; animation: perfil-entra .55s var(--resorte); }
+.perfil-dlg::backdrop { background: rgba(8, 17, 30, .6); backdrop-filter: blur(4px); }
+@keyframes perfil-entra { from { opacity: 0; transform: translateY(30px) scale(.96); } }
+.perfil-barra { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px 16px 28px; background: var(--tinta); color: #fff; font: 600 1rem var(--serif); }
+.perfil-x { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .5); background: none; color: #fff; font-size: 1.2rem; line-height: 1; cursor: pointer; transition: background .25s, transform .4s var(--resorte); }
+.perfil-x:hover { background: rgba(255, 255, 255, .14); transform: rotate(90deg); }
+.perfil-cuerpo { overflow-y: auto; padding: clamp(20px, 3vw, 30px); }
+.perfil-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(22px, 4vw, 48px); align-items: center; }
+.perfil-foto { position: relative; display: grid; place-items: end center; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 999px 999px 18px 18px; isolation: isolate;
+  background: radial-gradient(70% 55% at 30% 10%, #3c66b8 0%, transparent 100%), linear-gradient(165deg, var(--tinta-2), var(--noche)); }
+.perfil-foto::before { content: ""; position: absolute; z-index: -1; top: 14%; width: 70%; aspect-ratio: 1; background: rgba(201, 164, 76, .16); border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; animation: morph 11s ease-in-out infinite; }
+.perfil-foto svg { width: 74%; fill: rgba(255, 255, 255, .2); animation: perfil-sube .9s .15s var(--ease) both; }
+@keyframes perfil-sube { from { transform: translateY(30px); opacity: 0; } }
+.perfil-eyebrow { margin: 0 0 12px; font: 700 .66rem/1.2 var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--oro-osc); }
+.perfil-txt h2 { margin: 0 0 18px; font: 800 clamp(1.8rem, 3.8vw, 3rem)/1.05 var(--serif); text-transform: uppercase; color: var(--tinta); }
+.perfil-txt h2 span { display: block; color: var(--oro-osc); }
+.perfil-lead { margin: 0 0 22px; padding-bottom: 22px; border-bottom: 1px solid var(--linea); color: var(--gris); font-size: 1.04rem; line-height: 1.6; }
+.perfil-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.perfil-txt > * { animation: aparecer .6s var(--ease) both; }
+.perfil-txt > :nth-child(2) { animation-delay: .08s; } .perfil-txt > :nth-child(3) { animation-delay: .16s; } .perfil-txt > :nth-child(4) { animation-delay: .24s; }
+.perfil-tarjetas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 24px; }
+.pt { padding: clamp(24px, 3.4vw, 40px); border-radius: 28px 28px 18px 18px; animation: aparecer .7s .3s var(--ease) both; }
+.pt + .pt { animation-delay: .4s; }
+.pt h3 { margin: 0 0 12px; font: 700 clamp(1.05rem, 1.7vw, 1.35rem)/1.25 var(--serif); text-transform: uppercase; }
+.pt p:last-child { margin: 0; line-height: 1.6; }
+.pt-azul { background: radial-gradient(60% 80% at 100% 0%, #2b4d86 0%, transparent 100%), var(--tinta); color: #fff; }
+.pt-azul .perfil-eyebrow { color: var(--oro); }
+.pt-azul p:last-child { color: var(--claro); }
+.pt-oro { background: radial-gradient(60% 80% at 100% 0%, #f3dfa4 0%, transparent 100%), var(--oro); color: var(--tinta); }
+.pt-oro .perfil-eyebrow { color: var(--tinta-2); }
+@keyframes aparecer { from { opacity: 0; transform: translateY(14px); } }
+
+/* ---------- Carrito: tarjetas animadas ---------- */
+.bolsa { list-style: none; margin: 8px 0 18px; padding: 0; display: grid; gap: 12px; }
+.bolsa-item { display: flex; align-items: center; gap: 16px; padding: 10px 12px 10px 10px; border-radius: 22px; background: var(--blanco); border: 1px solid var(--linea); box-shadow: 0 14px 30px -24px rgba(8, 17, 30, .5);
+  animation: bolsa-entra .6s var(--resorte) both; animation-delay: var(--d, 0ms); transition: transform .35s var(--resorte), box-shadow .35s; }
+.bolsa-item:hover { transform: translateY(-2px); box-shadow: 0 20px 34px -22px rgba(8, 17, 30, .55); }
+@keyframes bolsa-entra { from { opacity: 0; transform: translateX(30px) scale(.96); } }
+.producto-media.bolsa-tile { flex: none; width: 76px; aspect-ratio: 1; border-radius: 22px; cursor: default; box-shadow: 0 12px 22px -14px rgba(8, 17, 30, .6); }
+.bolsa-tile .producto-arte { width: 46%; animation-duration: 4s; }
+.producto-media.bolsa-tile.grande { width: 120px; border-radius: 34px; margin: 0 auto 18px; }
+.bolsa-txt { flex: 1; min-width: 0; }
+.bolsa-txt small { display: block; margin-bottom: 4px; font: 700 .62rem/1.2 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--oro-osc); }
+.bolsa-txt b { display: block; font: 600 .98rem/1.3 var(--sans); color: var(--tinta); }
+.bolsa-quitar { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--linea-2); background: none; color: var(--gris); font-size: 1.1rem; line-height: 1; cursor: pointer; transition: background .25s, color .25s, transform .4s var(--resorte); }
+.bolsa-quitar:hover { background: var(--tinta); color: #fff; transform: rotate(90deg); }
+.bolsa-nota { margin: 0 0 18px; color: var(--gris); font-size: .9rem; }
+.bolsa-vacia { padding: 18px 0 22px; text-align: center; color: var(--gris); animation: aparecer .6s var(--ease) both; }
+
+@media (max-width: 720px) {
+  .perfil-top, .perfil-tarjetas { grid-template-columns: 1fr; }
+  .perfil-foto { width: min(240px, 70%); margin: 0 auto; }
+  .perfil-txt { text-align: center; }
+  .perfil-btns { justify-content: center; }
+}
