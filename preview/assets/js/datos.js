@@ -76,7 +76,7 @@
   const faqs = [
     { p: '¿La primera consulta tiene costo?', r: 'Depende del caso. Cuéntenos su situación y le diremos desde el inicio si la consulta tiene costo.' },
     { p: '¿Atienden de forma virtual?', r: 'Sí. Tenemos sede presencial en Valledupar y atendemos de forma virtual en todo el país.' },
-    { p: '¿Cuánto es la cuota que le corresponde a mi hijo?', r: 'No hay una cifra única: se fija según las necesidades del menor y la capacidad económica de quien debe pagarla, por acuerdo entre los padres o por decisión de un juez. Revisamos su caso y le orientamos para solicitarla o hacerla cumplir.' },
+    { p: '¿Cuánto es la cuota alimentaria que le corresponde a mi hijo?', r: 'No hay una cifra única: se fija según las necesidades del menor y la capacidad económica de quien debe pagarla, por acuerdo entre los padres o por decisión de un juez. Revisamos su caso y le orientamos para solicitarla o hacerla cumplir.' },
     { p: 'No me pagaron la liquidación, o trabajé años y no me pagaron nada. ¿Qué hago?', r: 'Reúna lo que tenga (contrato, desprendibles de pago, mensajes, certificados) y escríbanos. Nos especializamos en recuperar prestaciones sociales; revisamos qué se le debe y cómo reclamarlo. Estos derechos tienen plazos para reclamarse, así que conviene no esperar.' },
     { p: 'Me quiero divorciar y no me dan la firma', r: 'Si no hay acuerdo, el divorcio puede tramitarse ante un juez por las causales que establece la ley, sin la firma de la otra persona. Le explicamos cuál aplica en su caso.' },
     { p: 'Tengo una sanción de la DIAN y no sé qué hacer', r: 'Revise la fecha en que le notificaron: los plazos para responder son cortos. Nuestros contadores revisan el acto y le orientan para responder o corregir.' },

@@ -26,6 +26,8 @@
     cab.classList.toggle('sobre-oscuro', !!sobreHero && !menu.classList.contains('abierto'));
     cab.classList.toggle('con-borde', !sobreHero && scrollY > 10);
     cab.classList.toggle('velado', !!sobreHero && scrollY > 40);
+    // Con el menú abierto se quita el desenfoque: backdrop-filter encierra al menú fijo dentro de la cabecera
+    cab.classList.toggle('menu-abierto', menu.classList.contains('abierto'));
     if (scrollY < 200) enlaces.forEach((a) => a.classList.remove('activo'));
   };
   addEventListener('scroll', alScroll, { passive: true }); alScroll();
@@ -171,7 +173,14 @@
   $('#palabras').innerHTML = pal + pal + pal;
 
   /* ===== Cómo trabajamos: tres pasos cortos ===== */
-  $('#pasos').innerHTML = L.pasos.map((p, i) => `<li class="paso-col revelar"><span class="paso-n">${String(i + 1).padStart(2, '0')}</span><h3>${esc(p.t)}</h3><p>${esc(p.d)}</p></li>`).join('');
+  const icoPaso = [
+    '<path d="M8 10h32a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H22l-9 7v-7H8a3 3 0 0 1-3-3V13a3 3 0 0 1 3-3zM14 20h20M14 26h12"/>',
+    '<circle cx="21" cy="21" r="12"/><path d="M30 30l11 11M16 21l4 4 7-8"/>',
+    '<path d="M10 26v-4a14 14 0 0 1 28 0v4"/><rect x="6" y="25" width="8" height="12" rx="3"/><rect x="34" y="25" width="8" height="12" rx="3"/><path d="M38 37c0 4-4 6-10 6"/>',
+  ];
+  $('#pasos').innerHTML = L.pasos.map((p, i) => `<li class="paso-col revelar" style="--n:${i}">
+      <span class="paso-icono"><svg viewBox="0 0 48 48" aria-hidden="true">${icoPaso[i] || ''}</svg></span>
+      <div class="paso-card"><span class="paso-n">${String(i + 1).padStart(2, '0')}</span><h3>${esc(p.t)}</h3><p>${esc(p.d)}</p></div></li>`).join('');
 
   /* ===== Equipo: espacios reservados (aquí nunca se usan fotos de stock) ===== */
   const silueta = '<svg viewBox="0 0 120 140" aria-hidden="true"><circle cx="60" cy="48" r="24"/><path d="M14 140c2-30 22-50 46-50s44 20 46 50z"/></svg>';
@@ -434,10 +443,10 @@
       if (!en.isIntersecting) return; obsCifra.unobserve(en.target);
       const el = en.target, m = el.textContent.match(/^(\D*)(\d+)(.*)$/); if (!m) return;
       const fin = +m[2], t0 = performance.now();
-      const paso = (t) => { const k = Math.min(1, (t - t0) / 1600); el.textContent = m[1] + Math.round(fin * (1 - Math.pow(1 - k, 3))) + m[3]; if (k < 1) requestAnimationFrame(paso); };
+      const paso = (t) => { const k = Math.min(1, (t - t0) / 2200); el.textContent = m[1] + Math.round(fin * (1 - Math.pow(1 - k, 3))) + m[3]; if (k < 1) requestAnimationFrame(paso); };
       requestAnimationFrame(paso);
     }), { threshold: .6 });
-    $$('.cifras-lista dt').forEach((el) => obsCifra.observe(el));
+    $$('.cifras-lista .num').forEach((el) => obsCifra.observe(el));
     if (puntero) {
       // Botones dorados con leve atracción magnética
       $$('.btn-oro').forEach((b) => {

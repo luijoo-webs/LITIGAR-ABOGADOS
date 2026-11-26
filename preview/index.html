@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://images.unsplash.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Montserrat:wght@500..800&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="https://images.unsplash.com/photo-1714974528737-3e6c7e4d11af?auto=format&fit=crop&w=1600&q=72">
-<link rel="stylesheet" href="assets/css/sitio.css?v=14">
+<link rel="stylesheet" href="assets/css/sitio.css?v=15">
 </head>
 <body>
 <div class="progreso" id="progreso" aria-hidden="true"></div>
@@ -75,12 +75,13 @@
 
 <!-- CIFRAS -->
 <section class="cifras" aria-label="Litigar en cifras">
+  <span class="luz luz-a" aria-hidden="true"></span><span class="luz luz-b" aria-hidden="true"></span>
   <div class="contenedor cifras-in">
     <p class="cifras-titulo revelar">Los resultados hablan por nosotros</p>
     <dl class="cifras-lista">
-      <div class="revelar"><dt>5</dt><dd>profesionales en el equipo</dd></div>
-      <div class="revelar"><dt>6</dt><dd>áreas de práctica</dd></div>
-      <div class="revelar"><dt>100%</dt><dd>acompañamiento virtual</dd></div>
+      <div class="cifra revelar"><dt><svg class="cifra-ico" viewBox="0 0 48 48" aria-hidden="true"><circle cx="17" cy="15" r="6"/><circle cx="33" cy="17" r="5"/><path d="M5 40v-4a12 12 0 0 1 24 0v4M29 28a10 10 0 0 1 14 9v3"/></svg><span class="num">5</span></dt><dd>profesionales en el equipo</dd></div>
+      <div class="cifra revelar"><dt><svg class="cifra-ico" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6v34M14 40h20M10 12h28M10 12l-6 14a6 6 0 0 0 12 0zM38 12l-6 14a6 6 0 0 0 12 0z"/></svg><span class="num">6</span></dt><dd>áreas de práctica</dd></div>
+      <div class="cifra revelar"><dt><svg class="cifra-ico" viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="9" width="34" height="23" rx="2"/><path d="M3 38h42M19 20l4 4 7-8"/></svg><span class="num">100%</span></dt><dd>acompañamiento virtual</dd></div>
     </dl>
   </div>
 </section>
@@ -91,9 +92,20 @@
     <div class="firma-texto">
       <h2 class="titulo-linea revelar">Litigar Group</h2>
       <p class="revelar">Abogados y contadores en un mismo equipo. Fundada por el Dr. Gustavo Andrés Chaves Calderón y el contador Luis David Mieles Castilla, con un servicio humano y el respaldo de la marca.</p>
+      <ul class="rasgos">
+        <li class="revelar"><span class="rasgo-ico"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="17" cy="15" r="6"/><circle cx="33" cy="17" r="5"/><path d="M5 40v-4a12 12 0 0 1 24 0v4M29 28a10 10 0 0 1 14 9v3"/></svg></span><div><strong>Abogados y contadores</strong><small>Su caso jurídico y contable, en un solo lugar.</small></div></li>
+        <li class="revelar"><span class="rasgo-ico"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 41S7 31 7 18a9 9 0 0 1 17-4 9 9 0 0 1 17 4c0 13-17 23-17 23z"/></svg></span><div><strong>Servicio humano</strong><small>Le explicamos con franqueza sus posibilidades.</small></div></li>
+        <li class="revelar"><span class="rasgo-ico"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="9" width="34" height="23" rx="2"/><path d="M3 38h42M19 20l4 4 7-8"/></svg></span><div><strong>Atención virtual permanente</strong><small>Desde Valledupar, para todo el país.</small></div></li>
+      </ul>
       <a href="#equipo" class="btn btn-tinta revelar">Conozca al equipo <span class="f" aria-hidden="true">↗</span></a>
     </div>
     <div class="firma-visual">
+      <div class="sello-giro" aria-hidden="true">
+        <svg viewBox="0 0 200 200"><defs><path id="selloCirculo" d="M100 100m-78 0a78 78 0 1 1 156 0a78 78 0 1 1-156 0"/></defs>
+          <text><textPath href="#selloCirculo" textLength="486" lengthAdjust="spacing">ABOGADOS · CONTADORES · VALLEDUPAR ·</textPath></text></svg>
+        <img src="assets/img/litigar-logo.jpg" alt="">
+      </div>
+      <div class="tarjeta-flot" aria-hidden="true"><i></i><div><strong>Atención virtual</strong><small>En todo el país</small></div></div>
       <figure class="foto fv-a cortina" data-vel="-0.06">
         <img src="https://images.unsplash.com/photo-1758518731462-d091b0b4ed0d?auto=format&fit=crop&w=1100&q=72" loading="lazy" alt="Profesionales revisando un caso en una sala de reuniones">
       </figure>
@@ -281,8 +293,8 @@
 </dialog>
 
 <script src="config.js?v=7"></script>
-<script src="assets/js/datos.js?v=14"></script>
+<script src="assets/js/datos.js?v=15"></script>
 <script src="assets/js/demo.js?v=7"></script>
-<script src="assets/js/sitio.js?v=14"></script>
+<script src="assets/js/sitio.js?v=15"></script>
 </body>
 </html>
