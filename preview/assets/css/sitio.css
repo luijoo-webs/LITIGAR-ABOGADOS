@@ -356,6 +356,7 @@ figure { margin: 0; }
 .cita-exito { text-align: center; padding: 24px 0; animation: fundir .6s var(--ease); }
 .cita-exito .codigo { font: 600 1.4rem var(--sans); letter-spacing: .08em; padding: 14px 0; border-block: 1px solid var(--linea); margin: 0 auto 16px; max-width: 320px; }
 .cita-exito p { color: var(--gris); }
+.cita-exito .btn-tinta { margin: 4px 0 16px; }
 .check { width: 72px; height: 72px; margin: 0 auto 16px; display: block; fill: none; stroke: var(--oro-osc); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .check circle { stroke-dasharray: 151; stroke-dashoffset: 151; animation: trazo .7s var(--ease) forwards; }
 .check path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: trazo .4s .6s var(--ease) forwards; }
@@ -538,7 +539,6 @@ h3 { letter-spacing: -.02em; }
 /* ---------- Áreas de práctica: todas visibles, cada una con su formulario ---------- */
 .areas-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: clamp(16px, 2vw, 24px); }
 .area-tarjeta { grid-column: span 2; display: flex; flex-direction: column; background: var(--tinta); border: 1px solid var(--linea-osc); border-radius: 6px; overflow: hidden; transition: border-color .35s, transform .45s var(--ease), box-shadow .45s; }
-.area-tarjeta:nth-child(4) { grid-column: 2 / span 2; }
 .area-tarjeta:hover { border-color: rgba(201, 164, 76, .6); transform: translateY(-6px); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .7); }
 .area-tarjeta.resalta { animation: resaltar 1.6s var(--ease); }
 @keyframes resaltar { 20%, 60% { border-color: var(--oro); box-shadow: 0 0 0 3px rgba(201, 164, 76, .45); } }
@@ -567,8 +567,8 @@ h3 { letter-spacing: -.02em; }
 .equipo-cabeza .eyebrow::after { content: ""; width: 28px; height: 1px; background: var(--oro); }
 .equipo-cabeza h2 { margin-bottom: 14px; }
 .equipo-cabeza .apoyo { margin: 0 auto; }
-.equipo { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(16px, 2vw, 28px); }
-.miembro { background: var(--blanco); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(8, 17, 30, .06), 0 18px 40px -28px rgba(8, 17, 30, .35); transition: transform .45s var(--ease), box-shadow .45s; }
+.equipo { --g: clamp(16px, 2vw, 28px); list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--g); }
+.miembro { flex: 0 1 calc((100% - 2 * var(--g)) / 3); background: var(--blanco); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(8, 17, 30, .06), 0 18px 40px -28px rgba(8, 17, 30, .35); transition: transform .45s var(--ease), box-shadow .45s; }
 .miembro:hover { transform: translateY(-6px); box-shadow: 0 1px 2px rgba(8, 17, 30, .06), 0 30px 60px -30px rgba(8, 17, 30, .45); }
 .miembro-foto { position: relative; aspect-ratio: 1 / 1.05; display: grid; place-items: end center; overflow: hidden; background: linear-gradient(180deg, #E4E1D9, #CFCAC0); }
 .miembro-foto svg { width: 72%; fill: #B7B1A5; transition: transform .8s var(--ease); }
@@ -580,7 +580,8 @@ h3 { letter-spacing: -.02em; }
 .miembro:hover .miembro-capa .btn, .miembro:focus-within .miembro-capa .btn { transform: none; }
 .miembro-texto { padding: 18px 16px 22px; text-align: center; }
 .miembro-texto h3 { font-size: 1.12rem; margin: 0 0 4px; color: var(--tinta); }
-.miembro-texto .cargo { margin: 0; font-size: .86rem; color: var(--gris); }
+.miembro-texto .cargo { margin: 0; font-size: .86rem; color: var(--oro-osc); font-weight: 600; }
+.miembro-texto .esp { margin: 6px 0 0; font-size: .84rem; color: var(--gris); }
 .miembro.revelar { transform: translateY(30px); }
 .miembro.revelar.visible { transform: none; }
 .miembro.revelar.visible:hover { transform: translateY(-6px); }
@@ -599,12 +600,12 @@ h3 { letter-spacing: -.02em; }
 
 @media (max-width: 1080px) {
   .areas-grid { grid-template-columns: repeat(2, 1fr); }
-  .area-tarjeta, .area-tarjeta:nth-child(4) { grid-column: auto; }
-  .equipo { grid-template-columns: repeat(2, 1fr); }
+  .area-tarjeta { grid-column: auto; }
+  .miembro { flex-basis: calc((100% - var(--g)) / 2); }
 }
 @media (max-width: 640px) {
   .areas-grid { grid-template-columns: 1fr; }
-  .equipo { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .equipo { --g: 12px; }
   .miembro-texto { padding: 14px 10px 16px; }
   .miembro-texto h3 { font-size: .98rem; }
   .miembro-capa { opacity: 1; background: none; place-items: end center; padding-bottom: 10px; }

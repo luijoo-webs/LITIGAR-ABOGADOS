@@ -12,7 +12,7 @@
   // Fotografías de referencia (Unsplash) mientras llegan las de la firma
   const foto = (id, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=72`;
   const fotoArea = { familia: '1562564055-71e051d33c19', laboral: '1551135049-8a33b5883817', civil: '1564846824194-346b7871b855',
-    'seguridad-social': '1758518729912-bf3a84c400e0', tributario: '1520607162513-77705c0f0d4a' };
+    'seguridad-social': '1758518729912-bf3a84c400e0', tributario: '1520607162513-77705c0f0d4a', penal: '1589829545856-d10d557cf95f' };
 
   $$('[data-wa]').forEach((a) => (a.href = c.whatsapp));
   $('#anio').textContent = new Date().getFullYear();
@@ -161,13 +161,13 @@
   $('#equipoLista').innerHTML = L.equipo.map((m, i) => `<li class="miembro revelar">
       <div class="miembro-foto">${silueta}<span class="miembro-pend">Foto oficial pendiente</span>
         <div class="miembro-capa"><button type="button" class="btn btn-claro btn-sm" data-perfil="${i}">Ver perfil</button></div></div>
-      <div class="miembro-texto"><h3>${esc(m.nombre)}</h3><p class="cargo">${esc(m.cargo)}</p></div></li>`).join('');
+      <div class="miembro-texto"><h3>${esc(m.nombre)}</h3><p class="cargo">${esc(m.cargo)}</p>${m.especialidad ? `<p class="esp">${esc(m.especialidad)}</p>` : ''}</div></li>`).join('');
   $('#equipoLista').addEventListener('click', (e) => {
     const b = e.target.closest('[data-perfil]'); if (!b) return;
     const m = L.equipo[+b.dataset.perfil];
     abrirCajon(`<p class="eyebrow">${esc(m.cargo)}</p><h2 id="cajonTitulo">${esc(m.nombre)}</h2>
-      <p><strong>Especialidad:</strong> ${esc(m.especialidad)}</p><p>${esc(m.bio)}</p>
-      <p class="ayuda">Perfil provisional. La firma lo completará desde el panel con la información y la fotografía oficial.</p>`, 'perfil');
+      ${m.especialidad ? `<p><strong>Especialidad:</strong> ${esc(m.especialidad)}</p>` : ''}${m.bio ? `<p>${esc(m.bio)}</p>` : ''}
+      <p class="ayuda">La fotografía oficial y el perfil completo (estudios y trayectoria) se publicarán cuando la firma los envíe.</p>`, 'perfil');
     setTimeout(() => $('.cerrar', cajon).focus(), 50);
   });
 
@@ -205,7 +205,7 @@
     + c.telefonos.map((t) => canal('Teléfono', t, `tel:+57${t.replace(/\s/g, '')}`)).join('')
     + canal('Correo', c.correo, `mailto:${c.correo}`)
     + canal('Instagram', '@litigar.abogados', c.instagram, true)
-    + pendiente('Dirección') + pendiente('Horario');
+    + `<li><div class="pend"><small>Atención</small><strong>${esc(c.ciudad)}</strong></div></li>` + pendiente('Horario');
   $('#faqs').innerHTML = L.faqs.map((f) => `<details><summary>${esc(f.p)}</summary><p>${esc(f.r)}</p></details>`).join('');
   $('#pieAreas').innerHTML = L.areas.map((a, i) => `<li><a href="#area-${a.id}" data-abrir-area="${i}">${esc(a.corto)}</a></li>`).join('');
   $('#pieContacto').innerHTML = c.telefonos.map((t) => `<li><a href="tel:+57${t.replace(/\s/g, '')}">${t}</a></li>`).join('')
@@ -271,6 +271,7 @@
   const exitoHtml = (d, res) => `<div class="cita-exito"><svg class="check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>
       <h3 tabindex="-1" id="citaOk">Recibimos su solicitud, ${esc(d.nombre)}</h3><p>Su código de seguimiento es</p><div class="codigo">${esc(res.codigo)}</div>
       <p>${d.tipo === 'cita' ? 'Una persona del equipo le contactará para confirmar el día y la hora. Hasta entonces la cita no está confirmada.' : 'El equipo revisará lo que necesita y le enviará la cotización por el medio que indicó.'}</p>
+      <a class="btn btn-tinta btn-sm" target="_blank" rel="noopener" href="https://wa.me/${c.oficinaWa}?text=${encodeURIComponent('Hola, acabo de enviar la solicitud ' + res.codigo + ' desde la página web de Litigar.')}">Avisar a la oficina por WhatsApp</a>
       ${res.real ? '' : '<p class="aviso-demo"><strong>Vista previa:</strong> se guardó solo en este navegador; no se envió a la firma.</p>'}</div>`;
 
   /* ===== Formulario rápido por área (en el cajón lateral) ===== */

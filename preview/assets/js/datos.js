@@ -4,58 +4,62 @@
   const PROV = 'Provisional';
 
   const contacto = {
-    nombre: 'Litigar Group S.A.S.',
-    lema: 'Abogados & Asesores',
+    nombre: 'Litigar Group – Abogados & Asociados S.A.S.',
+    lema: 'Abogados & Asociados',
     telefonos: ['315 050 6085', '318 239 1588'],
+    oficinaWa: '573150506085', // la firma pidió que las solicitudes lleguen a este número
     correo: 'info@litigar.co',
     whatsapp: 'https://api.whatsapp.com/message/6MJQOIN5DEMUP1?autoload=1&app_absent=0',
     instagram: 'https://www.instagram.com/litigar.abogados/',
-    ciudad: 'Por confirmar',
-    direccion: 'Por confirmar',
+    ciudad: 'Sede en Valledupar · virtual en todo el país',
+    direccion: null, // la firma prefiere no publicar dirección
     horario: 'Por confirmar',
   };
 
-  // Áreas vistas en el Instagram de la firma; las descripciones son provisionales.
+  // Áreas y descripciones según el cuestionario respondido por la firma (2026-11).
+  // El orden pone primero lo que la firma quiere impulsar: alimentos, prestaciones sociales y declaraciones.
   const areas = [
     { id: 'familia', nombre: 'Derecho de Familia', corto: 'Familia',
-      resumen: 'Acompañamiento en asuntos que afectan a su núcleo familiar, con criterio jurídico y trato humano.',
-      temas: ['Cuotas alimentarias', 'Impugnación de paternidad', 'Custodia y visitas', 'Divorcios y liquidación de sociedad conyugal'],
-      ampliado: 'Texto provisional. Aquí la firma describirá su enfoque en Derecho de Familia, el tipo de casos que atiende y qué documentos conviene tener a mano en la primera consulta.' },
+      resumen: 'Defendemos a madres y padres que no reciben la cuota de sus hijos, y protegemos el patrimonio de quienes enfrentan un divorcio o una herencia.',
+      temas: ['Cuota de alimentos', 'Divorcio', 'Protección del patrimonio en un divorcio', 'Herencias y sucesiones'] },
     { id: 'laboral', nombre: 'Derecho Laboral', corto: 'Laboral',
-      resumen: 'Protección de los derechos que nacen de la relación de trabajo, para trabajadores y empleadores.',
-      temas: ['Despido injustificado o indirecto', 'Llamados de atención y debido proceso', 'Accidentes de trabajo', 'Liquidaciones y prestaciones'],
-      ampliado: 'Texto provisional. Aquí la firma describirá cómo acompaña a trabajadores y empresas, y en qué momento conviene buscar asesoría.' },
+      resumen: 'Recuperamos las prestaciones sociales y las acreencias laborales que se le deben al trabajador.',
+      temas: ['Recuperación de prestaciones sociales', 'Liquidación no pagada', 'Años trabajados sin pago de prestaciones'] },
+    { id: 'tributario', nombre: 'Contable y Tributario', corto: 'Contable',
+      resumen: 'Contadores especialistas en declaraciones de renta de persona natural y jurídica, revisoría fiscal y asesoría en impuestos.',
+      temas: ['Declaración de renta (persona natural y jurídica)', 'Declaraciones tributarias', 'Revisoría fiscal', 'Facturación electrónica: resolución e implementación',
+        'Creación y liquidación de empresas', 'Renovación de Cámara de Comercio, Industria y Comercio y RUP', 'Información exógena', 'Asesoría financiera y tributaria'] },
+    { id: 'penal', nombre: 'Derecho Penal', corto: 'Penal',
+      resumen: 'Defensa en todo tipo de delitos. Defendemos la inocencia de las personas.',
+      temas: ['Defensa penal'] },
     { id: 'civil', nombre: 'Derecho Civil', corto: 'Civil',
-      resumen: 'Soluciones para conflictos entre particulares: contratos, bienes, obligaciones y responsabilidad.',
-      temas: ['Contratos e incumplimientos', 'Cobros y obligaciones', 'Bienes y sucesiones', 'Responsabilidad civil'],
-      ampliado: 'Texto provisional. Aquí la firma describirá los asuntos civiles que atiende y su forma de abordarlos, por vía conciliatoria o judicial.' },
-    { id: 'seguridad-social', nombre: 'Seguridad Social', corto: 'Seguridad social',
-      resumen: 'Orientación en pensiones, salud y riesgos laborales para que su protección no quede en el papel.',
-      temas: ['Pensiones', 'Incapacidades', 'Calificación de pérdida de capacidad laboral', 'Reclamaciones ante EPS y ARL'],
-      ampliado: 'Texto provisional. Aquí la firma describirá su experiencia en seguridad social y los trámites que acompaña.' },
-    { id: 'tributario', nombre: 'Tributario y Finanzas', corto: 'Tributario',
-      resumen: 'Abogados y contadores trabajando juntos en sus obligaciones tributarias y financieras.',
-      temas: ['Declaración de renta', 'Corrección de declaraciones', 'Requerimientos de la DIAN', 'Planeación tributaria'],
-      ampliado: 'Texto provisional. Aquí la firma describirá cómo integra la asesoría jurídica y contable en asuntos tributarios.' },
+      resumen: 'Nos especializamos en contratos, obligaciones entre partes y cobro coactivo de cartera.',
+      temas: ['Contratos', 'Obligaciones entre partes', 'Cobro de cartera'] },
+    { id: 'seguridad-social', nombre: 'Seguridad Social y Pensiones', corto: 'Seguridad social',
+      resumen: 'Asesoría en pensiones y seguridad social.',
+      temas: ['Pensiones'] },
   ];
 
   const pasos = [
-    { t: 'Nos cuenta su situación', d: 'Por WhatsApp, por teléfono o con el formulario de este sitio. Son preguntas cortas y no necesita términos jurídicos.' },
-    { t: 'Revisamos y le orientamos', d: 'Una persona del equipo lee su caso y valora si corresponde a los servicios de la firma. Ningún sistema decide por usted.' },
-    { t: 'Le acompañamos', d: 'Si podemos ayudarle, le contactamos por el canal que indicó para coordinar la consulta y los siguientes pasos.' },
+    { t: 'Nos cuenta su caso', d: 'Por WhatsApp, por teléfono o con el formulario de este sitio. No necesita términos jurídicos.' },
+    { t: 'Le decimos sus posibilidades', d: 'Hablamos con resultados: antes de empezar le explicamos con franqueza las posibilidades de un resultado favorable. En la mayoría de procesos, los honorarios se definen a partir de esa evaluación.' },
+    { t: 'Le acompañamos siempre', d: 'Acompañamiento virtual permanente, con líneas de atención personalizada para clientes nuevos y antiguos.' },
   ];
 
-  // Sin nombres reales: la firma los confirmará. En producción se administran desde el panel (Equipo).
+  // Equipo según el cuestionario. Aún no hay fotografías oficiales (la firma las tomará).
   const equipo = [
-    { nombre: 'Integrante por confirmar', cargo: 'Socio fundador', especialidad: 'Por confirmar', bio: 'Descripción profesional provisional. Se reemplaza desde el panel administrativo.' },
-    { nombre: 'Integrante por confirmar', cargo: 'Abogado asociado', especialidad: 'Por confirmar', bio: 'Descripción profesional provisional. Se reemplaza desde el panel administrativo.' },
-    { nombre: 'Integrante por confirmar', cargo: 'Contador asesor', especialidad: 'Tributario y Finanzas', bio: 'Descripción profesional provisional. Se reemplaza desde el panel administrativo.' },
-    { nombre: 'Integrante por confirmar', cargo: 'Abogado', especialidad: 'Por confirmar', bio: 'Descripción profesional provisional. Se reemplaza desde el panel administrativo.' },
+    { nombre: 'Gustavo Andrés Chaves Calderón', cargo: 'Abogado · Socio fundador', especialidad: 'Derecho civil, de familia, laboral y seguridad social',
+      bio: 'Fundó Litigar con un servicio de atención personalizada.' },
+    { nombre: 'Luis David Mieles Castilla', cargo: 'Contador · Socio directivo', especialidad: 'Área contable y tributaria',
+      bio: 'Se unió al socio fundador para ofrecer una firma de abogados y contadores que no deja de lado la humanización del servicio.' },
+    { nombre: 'Laura Patricia Barros Córdoba', cargo: 'Abogada auxiliar asociada', especialidad: '', bio: '' },
+    { nombre: 'Alexandra Manosalva', cargo: 'Auxiliar jurídico', especialidad: '', bio: '' },
+    { nombre: 'Yamith Enrique Bornachera Arrieta', cargo: 'Marketing jurídico', especialidad: '', bio: '' },
   ];
 
   // Títulos basados en temas publicados en el Instagram de la firma; fechas y resúmenes provisionales.
   const articulos = [
-    { titulo: '¿Declaras renta? Lo que conviene revisar antes de presentar', cat: 'Tributario', fecha: '2026-11-18', destacado: true, min: 6,
+    { titulo: '¿Declaras renta? Lo que conviene revisar antes de presentar', cat: 'Contable', fecha: '2026-11-18', destacado: true, min: 6,
       resumen: 'Resumen provisional: quiénes deben declarar, qué documentos reunir y qué hacer si ya presentó con errores.' },
     { titulo: 'La inasistencia alimentaria también es un delito', cat: 'Familia', fecha: '2026-11-10', min: 4,
       resumen: 'Resumen provisional sobre las consecuencias de no cumplir la cuota alimentaria.' },
@@ -70,8 +74,13 @@
   ];
 
   const faqs = [
-    { p: '¿La primera consulta tiene costo?', r: 'Por confirmar con la firma.' },
-    { p: '¿Atienden de forma virtual?', r: 'Por confirmar con la firma.' },
+    { p: '¿La primera consulta tiene costo?', r: 'Depende del caso. Cuéntenos su situación y le diremos desde el inicio si la consulta tiene costo.' },
+    { p: '¿Atienden de forma virtual?', r: 'Sí. Tenemos sede presencial en Valledupar y atendemos de forma virtual en todo el país.' },
+    { p: '¿Cuánto es la cuota que le corresponde a mi hijo?', r: 'No hay una cifra única: se fija según las necesidades del menor y la capacidad económica de quien debe pagarla, por acuerdo entre los padres o por decisión de un juez. Revisamos su caso y le orientamos para solicitarla o hacerla cumplir.' },
+    { p: 'No me pagaron la liquidación, o trabajé años y no me pagaron nada. ¿Qué hago?', r: 'Reúna lo que tenga (contrato, desprendibles de pago, mensajes, certificados) y escríbanos. Nos especializamos en recuperar prestaciones sociales; revisamos qué se le debe y cómo reclamarlo. Estos derechos tienen plazos para reclamarse, así que conviene no esperar.' },
+    { p: 'Me quiero divorciar y no me dan la firma', r: 'Si no hay acuerdo, el divorcio puede tramitarse ante un juez por las causales que establece la ley, sin la firma de la otra persona. Le explicamos cuál aplica en su caso.' },
+    { p: 'Tengo una sanción de la DIAN y no sé qué hacer', r: 'Revise la fecha en que le notificaron: los plazos para responder son cortos. Nuestros contadores revisan el acto y le orientan para responder o corregir.' },
+    { p: '¿Cómo hago mi declaración de renta?', r: 'Le ayudamos a revisar si está obligado a declarar, a reunir los documentos y a presentarla, tanto para personas naturales como para empresas.' },
     { p: '¿Enviar una solicitud me compromete a algo?', r: 'No. La solicitud solo permite que el equipo revise su situación. Ni usted ni la firma adquieren un compromiso por enviarla.' },
     { p: '¿Qué pasa con la información que envío?', r: 'Se trata de forma confidencial y solo para atender su solicitud, conforme a la política de tratamiento de datos personales.' },
   ];
